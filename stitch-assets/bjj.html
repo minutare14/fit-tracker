@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BJJ Log - Sessions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ccff00",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#1f230f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-white/10 hidden md:flex flex-col bg-background-light dark:bg-background-dark">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-primary text-background-dark p-1.5 rounded">
+<span class="material-symbols-outlined block">sports_kabaddi</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">BJJ LOG</h1>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-medium text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/20 text-primary" href="#">
+<span class="material-symbols-outlined filled-icon">calendar_today</span>
+<span class="font-medium text-sm">Sessions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-medium text-sm">Techniques</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-medium text-sm">Analytics</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-white/10">
+<div class="flex items-center gap-3 p-2">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">GP</div>
+<div>
+<p class="text-sm font-bold">Grappler Pro</p>
+<p class="text-xs text-slate-500">Purple Belt</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-8 bg-background-light dark:bg-background-dark">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/50" placeholder="Search techniques or notes..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Area -->
+<div class="flex-1 overflow-y-auto p-8">
+<div class="max-w-6xl mx-auto space-y-8">
+<!-- Top Action & Quick Stats -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="lg:col-span-8">
+<button class="w-full h-32 bg-primary hover:bg-primary/90 text-background-dark rounded-xl flex flex-col items-center justify-center gap-2 transition-all group shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-4xl font-bold group-hover:scale-110 transition-transform">add_circle</span>
+<span class="text-xl font-bold uppercase tracking-wider">Log New Session</span>
+</button>
+</div>
+<div class="lg:col-span-4 grid grid-cols-2 gap-4">
+<div class="bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-bold tracking-tight">Monthly Mat Hours</p>
+<div class="flex items-end gap-2 mt-1">
+<span class="text-3xl font-bold">42.5</span>
+<span class="text-emerald-500 text-xs font-bold mb-1">+12%</span>
+</div>
+</div>
+<div class="bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col justify-center">
+<p class="text-xs text-slate-500 uppercase font-bold tracking-tight">Weekly Load</p>
+<div class="flex items-end gap-1 mt-2 h-10">
+<div class="w-full bg-primary/20 rounded-t-sm h-[40%]"></div>
+<div class="w-full bg-primary/20 rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-primary rounded-t-sm h-[90%]"></div>
+<div class="w-full bg-primary/20 rounded-t-sm h-[50%]"></div>
+<div class="w-full bg-primary/20 rounded-t-sm h-[30%]"></div>
+<div class="w-full bg-primary/20 rounded-t-sm h-[70%]"></div>
+<div class="w-full bg-primary/40 rounded-t-sm h-[10%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Filters Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h2 class="text-2xl font-bold">Recent Sessions</h2>
+<div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+<button class="px-4 py-1.5 rounded-full bg-primary text-background-dark text-xs font-bold">All</button>
+<button class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-xs font-bold hover:border-primary/50 hover:text-primary transition-colors">Sparring</button>
+<button class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-xs font-bold hover:border-primary/50 hover:text-primary transition-colors">Drilling</button>
+<button class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-xs font-bold hover:border-primary/50 hover:text-primary transition-colors">Technical</button>
+</div>
+</div>
+<!-- Sessions List -->
+<div class="space-y-4">
+<!-- Session Card 1 -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden hover:border-primary/30 transition-colors group">
+<div class="p-5 flex flex-col md:flex-row md:items-center gap-6">
+<div class="flex flex-col items-center justify-center min-w-[80px] py-2 px-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10">
+<span class="text-xs font-bold text-slate-500 uppercase">Oct</span>
+<span class="text-2xl font-bold">24</span>
+</div>
+<div class="flex-1 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">Sparring</span>
+<h3 class="font-bold text-lg">No-Gi Advanced Class</h3>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Session Load</p>
+<p class="text-xl font-bold text-primary">720</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500 font-medium">Intensity (RPE 8)</span>
+<span class="font-bold">Hard</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 80%"></div>
+</div>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm mt-0.5">notes</span>
+<p class="text-sm text-slate-500 line-clamp-2 italic">"Focused on guard retention against larger opponents. Successfully implemented the k-guard entry but struggled with the sweep finish..."</p>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col gap-2 justify-end">
+<button class="p-2 rounded hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Session Card 2 -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden hover:border-primary/30 transition-colors group">
+<div class="p-5 flex flex-col md:flex-row md:items-center gap-6">
+<div class="flex flex-col items-center justify-center min-w-[80px] py-2 px-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10">
+<span class="text-xs font-bold text-slate-500 uppercase">Oct</span>
+<span class="text-2xl font-bold">22</span>
+</div>
+<div class="flex-1 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">Technical</span>
+<h3 class="font-bold text-lg">Morning Flow Roll &amp; Drills</h3>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Session Load</p>
+<p class="text-xl font-bold text-primary">240</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500 font-medium">Intensity (RPE 4)</span>
+<span class="font-bold">Moderate</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 40%"></div>
+</div>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm mt-0.5">notes</span>
+<p class="text-sm text-slate-500 line-clamp-2 italic">"Drilled berimbolo entries for 45 mins. Heart rate stayed low, purely focused on the mechanics of the inversion."</p>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col gap-2 justify-end">
+<button class="p-2 rounded hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Session Card 3 -->
+<div class="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden hover:border-primary/30 transition-colors group">
+<div class="p-5 flex flex-col md:flex-row md:items-center gap-6">
+<div class="flex flex-col items-center justify-center min-w-[80px] py-2 px-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10">
+<span class="text-xs font-bold text-slate-500 uppercase">Oct</span>
+<span class="text-2xl font-bold">21</span>
+</div>
+<div class="flex-1 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Drilling</span>
+<h3 class="font-bold text-lg">Comp Team Drills</h3>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Session Load</p>
+<p class="text-xl font-bold text-primary">540</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-500 font-medium">Intensity (RPE 6)</span>
+<span class="font-bold">Challenging</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm mt-0.5">notes</span>
+<p class="text-sm text-slate-500 line-clamp-2 italic">"High volume drilling of double leg takedowns and sprawl counters. Worked on speed and reaction times."</p>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col gap-2 justify-end">
+<button class="p-2 rounded hover:bg-primary/10 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination / More -->
+<div class="flex justify-center pt-4">
+<button class="px-8 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-sm font-bold hover:bg-primary hover:text-background-dark hover:border-primary transition-all">
+                            Load Previous Sessions
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

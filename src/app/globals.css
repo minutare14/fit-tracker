@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #ccff00;
+  --color-background-light: #f8f8f5;
+  --color-background-dark: #12140a;
+  --color-card-bg: #1f230f;
+  --color-accent-blue: #00d1ff;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+
+  --font-display: "Inter", sans-serif;
+  
+  --radius-DEFAULT: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+}
+
+:root {
+  --background: #f8f8f5;
+  --foreground: #0f172a;
+  --card: #ffffff;
+}
+
+.dark {
+  --background: #12140a;
+  --foreground: #f8fafc;
+  --card: #1f230f;
+}
+
+@layer base {
+  *, ::after, ::before {
+    @apply border-slate-200 dark:border-slate-800;
+  }
+  body {
+    @apply bg-background text-foreground font-display antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+.chart-gradient-primary {
+  background: linear-gradient(180deg, rgba(204, 255, 0, 0.15) 0%, rgba(204, 255, 0, 0) 100%);
+}
+
+.chart-gradient-blue {
+  background: linear-gradient(180deg, rgba(0, 209, 255, 0.1) 0%, rgba(0, 209, 255, 0) 100%);
+}
+
+/* Material Symbols sizing and font family */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}

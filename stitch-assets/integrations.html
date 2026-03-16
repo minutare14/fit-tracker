@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ccff00",
+                        "electric-blue": "#00f0ff",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#0f1108",
+                        "surface-dark": "#1a1d0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(26, 29, 15, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(204, 255, 0, 0.1);
+        }
+        .status-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-primary/10 bg-background-dark flex flex-col fixed h-full z-50">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-background-dark">
+<span class="material-symbols-outlined font-bold">biotech</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-white text-sm font-bold leading-tight tracking-tight">BJJ PERFORMANCE</h1>
+<p class="text-primary text-[10px] font-bold tracking-[0.2em]">LAB V2.0</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="text-sm font-medium">Atletas</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="text-sm font-medium">Treinos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20" href="#">
+<span class="material-symbols-outlined">sync_alt</span>
+<span class="text-sm font-medium">Integrações</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Configurações</span>
+</a>
+</nav>
+<div class="p-4 border-t border-primary/10">
+<button class="w-full flex items-center justify-center gap-2 bg-primary text-background-dark py-2 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-white transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                Novo Registro
+            </button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 ml-64 p-8">
+<!-- Header -->
+<header class="mb-8">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-3xl font-black text-white tracking-tight">Gerenciamento de Integrações</h2>
+<p class="text-slate-400 mt-1">Controle e status das fontes de dados conectadas em tempo real.</p>
+</div>
+<div class="flex gap-3">
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Status Global</p>
+<p class="text-primary font-bold flex items-center gap-2 justify-end">
+                            Sistemas Operacionais
+                            <span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+</p>
+</div>
+</div>
+</div>
+</header>
+<!-- Integration Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Apple Health Card -->
+<div class="glass-panel p-5 rounded-xl border-l-4 border-l-primary flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 bg-slate-800 rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined">health_metrics</span>
+</div>
+<span class="px-2 py-1 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-tighter">Conectado</span>
+</div>
+<h3 class="font-bold text-white mb-1">Apple Health</h3>
+<p class="text-[11px] text-slate-400 mb-4 italic">via Health Auto Export</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[11px]">
+<span class="text-slate-500">Métricas:</span>
+<span class="text-slate-300">HRV, Sono, Passos, RHR</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="text-slate-500">Saúde:</span>
+<span class="text-primary font-bold">100%</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-white/5 flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                    há 5 min
+                </div>
+</div>
+<!-- Hevy Card -->
+<div class="glass-panel p-5 rounded-xl border-l-4 border-l-electric-blue flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 bg-slate-800 rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined">fitness_center</span>
+</div>
+<span class="px-2 py-1 rounded bg-electric-blue/10 text-electric-blue text-[10px] font-bold uppercase tracking-tighter">Conectado</span>
+</div>
+<h3 class="font-bold text-white mb-1">Hevy</h3>
+<p class="text-[11px] text-slate-400 mb-4">Treinamento de Força</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[11px]">
+<span class="text-slate-500">Volume:</span>
+<span class="text-slate-300">245 treinos importados</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="text-slate-500">Auto-sync:</span>
+<span class="text-electric-blue font-bold">ATIVO</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-white/5 flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                    hoje cedo
+                </div>
+</div>
+<!-- MyFitnessPal Card -->
+<div class="glass-panel p-5 rounded-xl border-l-4 border-l-yellow-500 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 bg-slate-800 rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<span class="px-2 py-1 rounded bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-tighter">Pendente</span>
+</div>
+<h3 class="font-bold text-white mb-1">MyFitnessPal</h3>
+<p class="text-[11px] text-slate-400 mb-4">Nutrição &amp; Calorias</p>
+<p class="text-[11px] text-slate-300 leading-relaxed mb-4">A conexão expirou ou ainda não foi configurada para este atleta.</p>
+</div>
+<button class="w-full py-2 bg-yellow-500 text-background-dark rounded text-xs font-bold uppercase hover:bg-yellow-400 transition-colors">Conectar Conta</button>
+</div>
+<!-- Manual BJJ Card -->
+<div class="glass-panel p-5 rounded-xl border-l-4 border-l-primary/40 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 bg-slate-800 rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined">sports_kabaddi</span>
+</div>
+<span class="px-2 py-1 rounded bg-primary/5 text-primary/60 text-[10px] font-bold uppercase tracking-tighter">Ativo</span>
+</div>
+<h3 class="font-bold text-white mb-1">Registros Manuais</h3>
+<p class="text-[11px] text-slate-400 mb-4">Treinos de Jiu-Jitsu</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[11px]">
+<span class="text-slate-500">Sessões:</span>
+<span class="text-slate-300 font-bold">84 Lançadas</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="text-slate-500">Última Entrada:</span>
+<span class="text-slate-300">Ontem</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-white/5 flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                    Histórico manual
+                </div>
+</div>
+</section>
+<!-- Stats and History Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Data Health Indicators -->
+<div class="lg:col-span-1 space-y-6">
+<div class="glass-panel rounded-xl p-6 border border-white/5">
+<h3 class="text-sm font-bold text-white mb-6 uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">monitoring</span>
+                        Saúde dos Dados
+                    </h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-[11px] mb-2 font-bold tracking-tight">
+<span class="text-slate-400 uppercase">Sincronização (Últimos 30 dias)</span>
+<span class="text-primary">98.4%</span>
+</div>
+<div class="flex gap-1 h-8">
+<!-- Mock small chart/bars -->
+<div class="flex-1 bg-primary rounded-t-sm opacity-20"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-40"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-60"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-30"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-80"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-50"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-100"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-90"></div>
+<div class="flex-1 bg-electric-blue rounded-t-sm opacity-100"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-100"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-80"></div>
+<div class="flex-1 bg-primary rounded-t-sm opacity-100"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white/5 p-3 rounded">
+<p class="text-[9px] uppercase font-bold text-slate-500 mb-1">Tempo Médio Sync</p>
+<p class="text-xl font-black text-white">1.2s</p>
+</div>
+<div class="bg-white/5 p-3 rounded">
+<p class="text-[9px] uppercase font-bold text-slate-500 mb-1">Erros Críticos</p>
+<p class="text-xl font-black text-red-500">0</p>
+</div>
+</div>
+<div class="p-4 bg-primary/5 rounded-lg border border-primary/10">
+<p class="text-[11px] text-primary leading-tight font-medium">Consistência de dados acima da média para este perfil. As correlações de HRV estão confiáveis.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Sync History Table -->
+<div class="lg:col-span-2">
+<div class="glass-panel rounded-xl overflow-hidden border border-white/5">
+<div class="p-6 border-b border-white/5 flex justify-between items-center">
+<h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-electric-blue text-lg">history</span>
+                            Histórico de Sincronização
+                        </h3>
+<button class="text-[10px] text-slate-400 hover:text-white uppercase font-bold underline decoration-primary underline-offset-4">Exportar Log</button>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-white/5 text-[10px] uppercase text-slate-500 font-black">
+<th class="px-6 py-4">Data/Hora</th>
+<th class="px-6 py-4">Fonte de Dados</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Itens Importados</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 text-xs">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-slate-300 font-mono">24 Out, 14:35</td>
+<td class="px-6 py-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">health_metrics</span>
+                                    Apple Health
+                                </td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                        Sucesso
+                                    </span>
+</td>
+<td class="px-6 py-4 text-slate-400">1.452 data points</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-slate-300 font-mono">24 Out, 09:12</td>
+<td class="px-6 py-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-electric-blue">fitness_center</span>
+                                    Hevy
+                                </td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                        Sucesso
+                                    </span>
+</td>
+<td class="px-6 py-4 text-slate-400">1 Treino (Push A)</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-slate-300 font-mono">23 Out, 22:00</td>
+<td class="px-6 py-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-yellow-500">restaurant</span>
+                                    MyFitnessPal
+                                </td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-red-500">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                        Erro de Auth
+                                    </span>
+</td>
+<td class="px-6 py-4 text-slate-400">0 itens</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-slate-300 font-mono">23 Out, 20:45</td>
+<td class="px-6 py-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary/60">sports_kabaddi</span>
+                                    BJJ Manual
+                                </td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                        Sucesso
+                                    </span>
+</td>
+<td class="px-6 py-4 text-slate-400">1 Sessão (Sparring)</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 text-slate-300 font-mono">23 Out, 14:30</td>
+<td class="px-6 py-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">health_metrics</span>
+                                    Apple Health
+                                </td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                        Sucesso
+                                    </span>
+</td>
+<td class="px-6 py-4 text-slate-400">842 data points</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 bg-white/2 flex justify-center">
+<button class="text-[10px] text-slate-500 hover:text-white uppercase font-black flex items-center gap-2">
+                            Ver mais logs
+                            <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- UI Overlay elements -->
+<div class="fixed bottom-6 right-6">
+<div class="glass-panel px-4 py-3 rounded-full flex items-center gap-4 border border-primary/20 shadow-2xl shadow-primary/10">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary status-pulse"></span>
+<span class="text-[10px] font-bold text-white uppercase tracking-wider">Cloud Sync Ativo</span>
+</div>
+<div class="h-4 w-px bg-white/10"></div>
+<span class="text-[10px] text-slate-400 font-medium italic">v2.4.0-stable</span>
+</div>
+</div>
+</body></html>

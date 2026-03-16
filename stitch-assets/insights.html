@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ccff00",
+                        "accent-blue": "#007AFF",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#0A0A0A",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-gradient-primary {
+            fill: url(#gradient-primary);
+        }
+        .chart-gradient-blue {
+            fill: url(#gradient-blue);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 flex-shrink-0 bg-slate-100 dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary flex items-center justify-center text-black">
+<span class="material-symbols-outlined font-bold">biotech</span>
+</div>
+<div>
+<h1 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">BJJ Lab</h1>
+<p class="text-xs text-slate-500 dark:text-zinc-500">Performance Elite</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-zinc-400 hover:bg-primary/10 hover:text-primary rounded transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded border-r-2 border-primary" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Insights</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-zinc-400 hover:bg-primary/10 hover:text-primary rounded transition-colors" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="text-sm font-medium">Treinos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-zinc-400 hover:bg-primary/10 hover:text-primary rounded transition-colors" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<span class="text-sm font-medium">Saúde</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-zinc-400 hover:bg-primary/10 hover:text-primary rounded transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-sm font-medium">Perfil</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-zinc-800">
+<button class="w-full py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-widest rounded hover:bg-opacity-90 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+                    Novo Registro
+                </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-8">
+<!-- Header Section -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Insights Estratégicos</h2>
+<p class="text-slate-500 dark:text-zinc-400 mt-1">Análise laboratorial de performance e biomarcadores.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-zinc-800 text-sm font-medium rounded hover:bg-opacity-80 transition-all">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+<span>Últimos 30 dias</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<button class="p-2 bg-slate-200 dark:bg-zinc-800 rounded">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</header>
+<!-- Cross-Correlation Section -->
+<section class="mb-8">
+<div class="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-6">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">query_stats</span>
+                                Cross-Correlation: Carga vs. Recuperação
+                            </h3>
+<p class="text-sm text-slate-500 dark:text-zinc-400">Correlação entre Training Load, HRV e Qualidade de Sono</p>
+</div>
+<div class="flex gap-4 text-xs font-medium">
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="dark:text-zinc-300">Training Load</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-accent-blue"></span>
+<span class="dark:text-zinc-300">HRV (Baseline)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-zinc-500"></span>
+<span class="dark:text-zinc-300">Sleep Quality</span>
+</div>
+</div>
+</div>
+<div class="h-64 w-full relative">
+<!-- Chart SVG Placeholder -->
+<svg class="w-full h-full overflow-visible" viewbox="0 0 1000 200">
+<defs>
+<lineargradient id="gradient-primary" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ccff00" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#ccff00" stop-opacity="0"></stop>
+</lineargradient>
+<lineargradient id="gradient-blue" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#007AFF" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#007AFF" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line class="stroke-slate-200 dark:stroke-zinc-800" stroke-dasharray="4" stroke-width="1" x1="0" x2="1000" y1="50" y2="50"></line>
+<line class="stroke-slate-200 dark:stroke-zinc-800" stroke-dasharray="4" stroke-width="1" x1="0" x2="1000" y1="100" y2="100"></line>
+<line class="stroke-slate-200 dark:stroke-zinc-800" stroke-dasharray="4" stroke-width="1" x1="0" x2="1000" y1="150" y2="150"></line>
+<!-- Area/Path Training Load -->
+<path class="chart-gradient-primary" d="M0,160 Q100,140 200,100 T400,120 T600,60 T800,140 T1000,80 L1000,200 L0,200 Z"></path>
+<path class="stroke-primary" d="M0,160 Q100,140 200,100 T400,120 T600,60 T800,140 T1000,80" fill="none" stroke-width="3"></path>
+<!-- Area/Path HRV -->
+<path class="chart-gradient-blue" d="M0,100 Q150,120 300,70 T600,110 T900,50 T1000,120 L1000,200 L0,200 Z"></path>
+<path class="stroke-accent-blue" d="M0,100 Q150,120 300,70 T600,110 T900,50 T1000,120" fill="none" stroke-dasharray="5,2" stroke-width="2"></path>
+</svg>
+<!-- Chart Labels -->
+<div class="flex justify-between mt-4 text-[10px] text-slate-400 font-mono uppercase">
+<span>01 Out</span>
+<span>07 Out</span>
+<span>14 Out</span>
+<span>21 Out</span>
+<span>28 Out</span>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Pattern Recognition Column -->
+<div class="lg:col-span-2 space-y-6">
+<h4 class="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">pattern</span>
+                        Pattern Recognition
+                    </h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Card 1 -->
+<div class="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 p-5 rounded-lg group hover:border-primary/50 transition-all">
+<div class="flex items-start justify-between mb-4">
+<div class="p-2 bg-red-500/10 text-red-500 rounded">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<span class="text-[10px] font-bold text-zinc-500 uppercase">Critical Alert</span>
+</div>
+<h5 class="font-bold text-slate-900 dark:text-white mb-2">Overtraining Risk</h5>
+<p class="text-sm text-slate-500 dark:text-zinc-400">Alta carga de treino combinada com HRV <span class="text-red-400">12% abaixo da baseline</span> detectada consistentemente às Terças-feiras.</p>
+<div class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 flex items-center gap-2">
+<span class="text-[10px] font-bold py-0.5 px-2 bg-zinc-800 rounded uppercase">Recalibrar Volume</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 p-5 rounded-lg group hover:border-accent-blue/50 transition-all">
+<div class="flex items-start justify-between mb-4">
+<div class="p-2 bg-primary/10 text-primary rounded">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<span class="text-[10px] font-bold text-zinc-500 uppercase">Efficiency Gain</span>
+</div>
+<h5 class="font-bold text-slate-900 dark:text-white mb-2">Nutrition &amp; Power</h5>
+<p class="text-sm text-slate-500 dark:text-zinc-400">Aumento de <span class="text-primary">15% no volume de Bench Press</span> em dias com ingestão de carboidratos superior a 300g.</p>
+<div class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 flex items-center gap-2">
+<span class="text-[10px] font-bold py-0.5 px-2 bg-zinc-800 rounded uppercase">Optimal Fueling</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 p-5 rounded-lg group hover:border-zinc-500 transition-all md:col-span-2">
+<div class="flex items-center gap-4">
+<div class="p-3 bg-accent-blue/10 text-accent-blue rounded-full">
+<span class="material-symbols-outlined text-2xl">bedtime</span>
+</div>
+<div>
+<h5 class="font-bold text-slate-900 dark:text-white">Sleep Impact on RPE</h5>
+<p class="text-sm text-slate-500 dark:text-zinc-400">O RPE (Percepção de Esforço) nas sessões de BJJ cai <span class="text-accent-blue font-bold">1 ponto</span> para cada hora adicional de sono profundo (Deep Sleep).</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Gap & Predictions -->
+<div class="space-y-8">
+<!-- Gap Analysis -->
+<div>
+<h4 class="text-sm font-bold uppercase tracking-widest text-accent-blue mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">priority_high</span>
+                            Gap Analysis
+                        </h4>
+<div class="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-lg overflow-hidden">
+<div class="p-4 space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-1.5 font-medium">
+<span class="dark:text-zinc-400 uppercase">Mobility Sessions</span>
+<span class="text-red-400">-40% Target</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-red-400 w-[60%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1.5 font-medium">
+<span class="dark:text-zinc-400 uppercase">Protein Intake</span>
+<span class="text-amber-400">-15% Target</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-amber-400 w-[85%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-1.5 font-medium">
+<span class="dark:text-zinc-400 uppercase">Hydration Baseline</span>
+<span class="text-primary">On Target</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[100%]"></div>
+</div>
+</div>
+</div>
+<div class="bg-slate-50 dark:bg-zinc-900 p-3 text-[10px] text-center dark:text-zinc-500 font-bold uppercase tracking-widest">
+                                3 Áreas Requerem Atenção Imediata
+                            </div>
+</div>
+</div>
+<!-- Performance Predictions -->
+<div>
+<h4 class="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">timeline</span>
+                            Readiness Forecast
+                        </h4>
+<div class="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-lg p-5">
+<div class="text-center mb-6">
+<p class="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter mb-1">Estimated Readiness Index</p>
+<div class="text-5xl font-black text-primary italic leading-none">88<span class="text-sm not-italic opacity-50 ml-1">pts</span></div>
+<p class="text-xs text-green-400 mt-2 font-medium flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> Peak State Likely in 48h
+                                </p>
+</div>
+<!-- Mini Sparkline for Prediction -->
+<div class="flex items-end gap-1 h-12 px-2">
+<div class="flex-1 bg-zinc-800 h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-zinc-800 h-[55%] rounded-t-sm"></div>
+<div class="flex-1 bg-zinc-800 h-[45%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/40 h-[70%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary h-[90%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/80 h-[85%] rounded-t-sm"></div>
+<div class="flex-1 bg-primary/60 h-[75%] rounded-t-sm"></div>
+</div>
+<div class="flex justify-between text-[8px] mt-2 text-zinc-600 font-bold uppercase">
+<span>Hoje</span>
+<span>Próxima Sem</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

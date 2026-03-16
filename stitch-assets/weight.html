@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ccff00",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#0A0A0A",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-gradient {
+            background: linear-gradient(to bottom, rgba(204, 255, 0, 0.1), transparent);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-[#121212]">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary">sports_kabaddi</span>
+</div>
+<div>
+<h1 class="text-sm font-bold tracking-tight">BJJ Performance Lab</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Elite Grappling</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg border border-primary/20" href="#">
+<span class="material-symbols-outlined">scale</span>
+<span class="text-sm font-medium">Peso e Composição</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="text-sm font-medium">Treinos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="text-sm font-medium">Performance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Configurações</span>
+</a>
+</nav>
+<div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2">
+<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="Headshot of a male athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaQhFzMzW1xbyX6YTYSwibHYj9oJ90spbMsmq2AoEEeGpZjyBKVb8yweBrzUrXoZ9-seCwb2khcr7RKFKyRZyZYQZC3cOrAnDU_VlKFATi1AtFn61IqWtnxoOCW1LSYoctM42urvbbtWTpRozYzTSEMnbokl7oAhCs-YGMdU9vvQV5DH1RaZFc59wAOhUpRoG8Sj_VzHYpZDfJTen7kREd1ufeGb_BdhJ4oO0KJupdlggtH1khFX_2V08hUF6kDXW83LVhmQpGxx0"/>
+</div>
+<div>
+<p class="text-xs font-bold">Rodrigo Lima</p>
+<p class="text-[10px] text-slate-500">Faixa Preta</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark">
+<!-- Header -->
+<header class="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0A0A0A]/80 backdrop-blur-md px-8 py-4">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-xl font-bold tracking-tight">Peso e Composição</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">Acompanhe sua evolução física e performance</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+<button class="px-3 py-1 text-xs font-medium rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">7D</button>
+<button class="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-slate-700 shadow-sm transition-colors text-primary">30D</button>
+<button class="px-3 py-1 text-xs font-medium rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">90D</button>
+<button class="px-3 py-1 text-xs font-medium rounded-md hover:bg-white dark:hover:bg-slate-700 transition-colors">All</button>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-black hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</header>
+<div class="p-8 space-y-8 max-w-7xl mx-auto">
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-white dark:bg-[#121212] p-6 rounded-xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-4xl">scale</span>
+</div>
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Peso Atual</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">82.4 kg</h3>
+<span class="text-xs font-medium text-emerald-500 flex items-center">
+<span class="material-symbols-outlined text-sm">arrow_downward</span> 0.6kg
+                        </span>
+</div>
+<p class="text-[10px] text-slate-500 mt-2">vs média 7 dias</p>
+</div>
+<div class="bg-white dark:bg-[#121212] p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">% Gordura</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">12.8%</h3>
+<span class="text-xs font-medium text-rose-500 flex items-center">
+<span class="material-symbols-outlined text-sm">arrow_upward</span> 0.2%
+                        </span>
+</div>
+<p class="text-[10px] text-slate-500 mt-2">Estimativa via Smart Scale</p>
+</div>
+<div class="bg-white dark:bg-[#121212] p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Massa Magra</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">71.8 kg</h3>
+<span class="text-xs font-medium text-emerald-500 flex items-center">
+<span class="material-symbols-outlined text-sm">trending_flat</span> Estável
+                        </span>
+</div>
+<p class="text-[10px] text-slate-500 mt-2">Baseado em composição total</p>
+</div>
+<div class="bg-white dark:bg-[#121212] p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">IMC</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-2xl font-bold tracking-tight">24.2</h3>
+<span class="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider">Normal</span>
+</div>
+<p class="text-[10px] text-slate-500 mt-2">Ideal: 18.5 - 24.9</p>
+</div>
+</div>
+<!-- Main Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Weight Trend Chart -->
+<div class="lg:col-span-2 bg-white dark:bg-[#121212] p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h4 class="text-sm font-bold">Tendência de Peso vs Peso Diário</h4>
+<p class="text-xs text-slate-500">Análise de média móvel de 7 dias</p>
+</div>
+<div class="flex items-center gap-4 text-[10px] font-medium uppercase tracking-widest">
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-0.5 bg-slate-400"></span>
+<span class="text-slate-500">Diário</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-0.5 bg-primary"></span>
+<span class="text-slate-500">Média Móvel</span>
+</div>
+</div>
+</div>
+<div class="h-64 relative flex flex-col justify-end">
+<!-- Chart Mockup SVG -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 800 240">
+<!-- Background Grid -->
+<line class="text-slate-100 dark:text-slate-800" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="0" y2="0"></line>
+<line class="text-slate-100 dark:text-slate-800" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="60" y2="60"></line>
+<line class="text-slate-100 dark:text-slate-800" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="120" y2="120"></line>
+<line class="text-slate-100 dark:text-slate-800" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="180" y2="180"></line>
+<line class="text-slate-100 dark:text-slate-800" stroke="currentColor" stroke-width="1" x1="0" x2="800" y1="240" y2="240"></line>
+<!-- Daily Data (Dots and thin lines) -->
+<path class="text-slate-300 dark:text-slate-700" d="M0 150 L50 160 L100 145 L150 155 L200 140 L250 135 L300 150 L350 130 L400 120 L450 125 L500 110 L550 105 L600 115 L650 95 L700 100 L750 85 L800 90" fill="none" stroke="currentColor" stroke-dasharray="4" stroke-width="1.5"></path>
+<!-- Trend Line (Solid Primary) -->
+<path d="M0 160 C100 155, 200 145, 300 140 S500 115, 600 110 S800 85, 800 85" fill="none" stroke="var(--primary)" stroke-width="3" style="stroke: #ccff00;"></path>
+<!-- Shaded Area Under Trend -->
+<path d="M0 160 C100 155, 200 145, 300 140 S500 115, 600 110 S800 85, 800 85 V240 H0 Z" fill="url(#gradient-primary)" style="opacity: 0.1;"></path>
+<defs>
+<lineargradient id="gradient-primary" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color: #ccff00;"></stop>
+<stop offset="100%" style="stop-color: transparent;"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="flex justify-between mt-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+<span>01 Out</span>
+<span>07 Out</span>
+<span>14 Out</span>
+<span>21 Out</span>
+<span>30 Out</span>
+</div>
+</div>
+</div>
+<!-- Weight x Performance -->
+<div class="bg-white dark:bg-[#121212] p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+<h4 class="text-sm font-bold mb-1">Peso x Performance</h4>
+<p class="text-xs text-slate-500 mb-6">Identificando o seu peso ideal de competição</p>
+<div class="space-y-6">
+<div class="relative h-48 flex items-end justify-between px-2">
+<!-- Heatmap style bars -->
+<div class="w-8 bg-slate-800/50 rounded-t-sm h-[40%] group relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-400">88kg</div>
+</div>
+<div class="w-8 bg-slate-800/50 rounded-t-sm h-[55%] group relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-400">86kg</div>
+</div>
+<div class="w-8 bg-primary rounded-t-sm h-[95%] group relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary">82kg</div>
+<div class="absolute inset-0 bg-primary/20 animate-pulse"></div>
+</div>
+<div class="w-8 bg-primary/60 rounded-t-sm h-[80%] group relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-primary/60">80kg</div>
+</div>
+<div class="w-8 bg-rose-500/20 rounded-t-sm h-[45%] group relative border-t-2 border-rose-500">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-bold text-rose-500">77kg</div>
+</div>
+</div>
+<div class="bg-primary/5 p-4 rounded-lg border border-primary/10">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-xl">insights</span>
+<p class="text-xs font-bold uppercase tracking-wider text-primary">Insight de Performance</p>
+</div>
+<p class="text-xs leading-relaxed text-slate-400">
+                                Seus melhores PRs de força e carga total de treino ocorrem entre <span class="text-slate-100 font-bold">81.5kg e 83.2kg</span>. Abaixo de 79kg sua recuperação cai 24%.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- History Table -->
+<div class="bg-white dark:bg-[#121212] rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<h4 class="text-sm font-bold">Histórico Recente</h4>
+<button class="text-xs font-medium text-primary hover:underline flex items-center gap-1">
+                        Ver tudo <span class="material-symbols-outlined text-xs">open_in_new</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-slate-50 dark:bg-slate-900/50">
+<th class="px-6 py-3">Data</th>
+<th class="px-6 py-3">Peso</th>
+<th class="px-6 py-3">Gordura %</th>
+<th class="px-6 py-3">Sentimento</th>
+<th class="px-6 py-3">Nota</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-medium">30 Out, 2023</td>
+<td class="px-6 py-4">82.4 kg <span class="text-[10px] text-emerald-500 ml-1">(-0.2)</span></td>
+<td class="px-6 py-4 text-slate-400">12.8%</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">bolt</span>
+<span class="text-xs">Energético e forte</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-bold">EXCELENTE</span></td>
+</tr>
+<tr class="text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-medium">29 Out, 2023</td>
+<td class="px-6 py-4">82.6 kg <span class="text-[10px] text-rose-500 ml-1">(+0.4)</span></td>
+<td class="px-6 py-4 text-slate-400">13.0%</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500">sentiment_satisfied</span>
+<span class="text-xs">Recuperado</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-bold">BOM</span></td>
+</tr>
+<tr class="text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-medium">28 Out, 2023</td>
+<td class="px-6 py-4">82.2 kg <span class="text-[10px] text-emerald-500 ml-1">(-0.1)</span></td>
+<td class="px-6 py-4 text-slate-400">12.7%</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500">battery_horiz_050</span>
+<span class="text-xs">Cansado (pós treino pesado)</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full text-[10px] font-bold">REGULAR</span></td>
+</tr>
+<tr class="text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<td class="px-6 py-4 font-medium">27 Out, 2023</td>
+<td class="px-6 py-4">82.3 kg <span class="text-[10px] text-slate-500 ml-1">(0.0)</span></td>
+<td class="px-6 py-4 text-slate-400">12.8%</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">bolt</span>
+<span class="text-xs">Pronto para luta</span>
+</div>
+</td>
+<td class="px-6 py-4"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-bold">EXCELENTE</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
