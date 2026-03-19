@@ -8,7 +8,7 @@ services:
     container_name: fit-tracker-app
     restart: unless-stopped
     ports:
-      - "${APP_HOST_PORT:-3010}:${APP_INTERNAL_PORT:-3000}"
+      - "${APP_HOST_PORT:?APP_HOST_PORT must be set}:${APP_INTERNAL_PORT:-3000}"
     environment:
       DATABASE_URL: ${DATABASE_URL:-}
       HEVY_API_KEY: ${HEVY_API_KEY:-}
@@ -24,6 +24,9 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+    networks:
+      - default
+      - dokploy-network
 
   db:
     image: postgres:16-alpine
@@ -35,13 +38,17 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-fit_tracker}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_HOST_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - default
 
 volumes:
   postgres_data:
+
+networks:
+  dokploy-network:
+    external: true
