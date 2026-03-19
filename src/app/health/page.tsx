@@ -1,145 +1,186 @@
-import Sidebar from "@/components/Sidebar"
-import PageHeader from "@/components/PageHeader"
-import HealthMarkerCard from "@/components/HealthMarkerCard"
-import RecoveryProtocolItem from "@/components/RecoveryProtocolItem"
+"use client";
+
+import { useCallback } from "react";
+import Sidebar from "@/components/Sidebar";
+import PageHeader from "@/components/PageHeader";
+import { QueryState } from "@/components/states/QueryState";
+import { useAsyncResource } from "@/hooks/useAsyncResource";
+
+interface HealthOverviewResponse {
+  syncStatus: {
+    connected: boolean;
+    lastSync: string | null;
+    totalRecords: number;
+    status: string;
+  };
+  metrics: {
+    hrv: { value: number; unit: string } | null;
+    restingHr: { value: number; unit: string } | null;
+    bodyTemp: { value: number; unit: string } | null;
+    sleep: number | null;
+    readinessScore: number | null;
+  };
+  series: Array<{
+    date: string;
+    hrv: number | null;
+    sleepHours: number | null;
+    load: number | null;
+    recovery: number | null;
+  }>;
+  recommendations: string[];
+}
+
+const shellState = (title: string, description: string) => (
+  <div className="flex min-h-screen bg-background-light dark:bg-background-dark">
+    <Sidebar />
+    <main className="ml-64 flex flex-1 items-center justify-center p-8">
+      <div className="max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-primary">Recovery</p>
+        <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-slate-100">{title}</h1>
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+      </div>
+    </main>
+  </div>
+);
+
+const MetricCard = ({
+  label,
+  value,
+  helper,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+}) => (
+  <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{label}</p>
+    <p className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100">{value}</p>
+    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p>
+  </div>
+);
 
 export default function HealthPage() {
+  const fetchOverview = useCallback(async (): Promise<HealthOverviewResponse> => {
+    const response = await fetch("/api/health/overview", { cache: "no-store" });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch health overview");
+    }
+
+    return response.json() as Promise<HealthOverviewResponse>;
+  }, []);
+
+  const resource = useAsyncResource<HealthOverviewResponse>({
+    scope: "health-overview-page",
+    fetcher: fetchOverview,
+    isEmpty: (data) => !data || (!data.syncStatus.totalRecords && !data.series.some((point) => point.hrv || point.sleepHours || point.load)),
+  });
+
   return (
-    <div className="flex min-h-screen bg-background-light dark:bg-background-dark">
-      <Sidebar />
-      
-      <main className="ml-64 flex-1 flex flex-col overflow-y-auto">
-        <PageHeader 
-          title="Recuperação & Saúde" 
-          action={
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                <span className="material-symbols-outlined text-sm">schedule</span>
-                Last Sync: 2m ago
-              </div>
-              <button className="h-9 px-4 rounded-lg bg-primary text-background-dark text-xs font-bold hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
-                GERAR RELATÓRIO
-              </button>
-            </div>
-          }
-        />
+    <QueryState
+      data={resource.data}
+      isLoading={resource.isLoading}
+      isEmpty={resource.isEmpty}
+      error={resource.error}
+      loadingFallback={shellState("Carregando recuperação", "Buscando métricas reais, readiness e histórico recebido via webhook.")}
+      emptyFallback={shellState("Nenhum dado de saúde ainda", "Configure o Health Auto Export e envie o primeiro payload para popular esta área.")}
+      errorFallback={shellState("Erro ao carregar recuperação", "A página não conseguiu montar o overview real de saúde e recuperação.")}
+    >
+      {(data) => (
+        <div className="flex min-h-screen bg-background-light dark:bg-background-dark">
+          <Sidebar />
 
-        <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
-          {/* Hero Stats Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Readiness Score Gauge */}
-            <div className="lg:col-span-4 bg-white dark:bg-card-dark p-8 rounded-xl border border-slate-200 dark:border-slate-800 relative overflow-hidden flex flex-col items-center justify-center shadow-sm">
-              <div className="absolute top-4 left-6">
-                <p className="text-xs font-bold text-slate-500 tracking-widest uppercase">Readiness Score</p>
-              </div>
-              <div className="relative size-48 flex items-center justify-center">
-                <svg className="size-full transform -rotate-90">
-                  <circle className="text-slate-100 dark:text-slate-800" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" strokeWidth="8"></circle>
-                  <circle className="text-primary" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" strokeDasharray="552.92" strokeDashoffset="66.35" strokeWidth="8"></circle>
-                </svg>
-                <div className="absolute flex flex-col items-center">
-                  <span className="text-6xl font-black text-slate-900 dark:text-slate-100 italic">88</span>
-                  <span className="text-xs font-bold text-primary tracking-widest">OPTIMAL</span>
+          <main className="ml-64 flex min-w-0 flex-1 flex-col">
+            <PageHeader
+              title="Recuperação & Saúde"
+              action={
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Última sync</p>
+                  <p className="text-sm font-bold text-primary">
+                    {data.syncStatus.lastSync ? new Date(data.syncStatus.lastSync).toLocaleString() : "Aguardando webhook"}
+                  </p>
                 </div>
-              </div>
-              <div className="mt-6 text-center">
-                <p className="text-sm text-slate-500 leading-relaxed">System ready for <span className="text-slate-900 dark:text-slate-100 font-bold">Max Intensity</span>. CNS recovery complete.</p>
-              </div>
-            </div>
+              }
+            />
 
-            {/* Core Indicators */}
-            <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <HealthMarkerCard 
-                label="HRV (rMSSD)" value="74" unit="ms" 
-                trend="trending_up" trendText="+8.2% vs baseline" trendColor="text-green-500" 
-                chartColor="text-sky-400" 
-              />
-              <HealthMarkerCard 
-                label="Resting HR" value="52" unit="bpm" 
-                trend="trending_down" trendText="-2.1% (Ideal)" trendColor="text-green-500" 
-                chartColor="text-primary" 
-              />
-              <HealthMarkerCard 
-                label="Body Temp" value="36.8" unit="°C" 
-                trend="remove" trendText="Stable Baseline" trendColor="text-slate-500" 
-                chartColor="text-slate-900 dark:text-slate-100" 
-              />
-            </div>
-          </div>
+            <div className="mx-auto w-full max-w-7xl space-y-8 p-8">
+              <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                <MetricCard
+                  label="Readiness"
+                  value={data.metrics.readinessScore !== null ? `${data.metrics.readinessScore}%` : "--"}
+                  helper="Calculado a partir das derivadas persistidas no backend."
+                />
+                <MetricCard
+                  label="HRV"
+                  value={data.metrics.hrv ? `${Math.round(data.metrics.hrv.value)} ${data.metrics.hrv.unit}` : "--"}
+                  helper="Última leitura recebida do Health Auto Export."
+                />
+                <MetricCard
+                  label="RHR"
+                  value={data.metrics.restingHr ? `${Math.round(data.metrics.restingHr.value)} ${data.metrics.restingHr.unit}` : "--"}
+                  helper="Frequência cardíaca de repouso mais recente."
+                />
+                <MetricCard
+                  label="Sono"
+                  value={data.metrics.sleep !== null ? `${data.metrics.sleep.toFixed(1)} h` : "--"}
+                  helper="Horas de sono extraídas dos dados normalizados."
+                />
+              </section>
 
-          {/* HRV vs LOAD Analysis Chart */}
-          <div className="bg-white dark:bg-card-dark p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">HRV vs. Training Load Analysis</h3>
-                <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">Correlation of fatigue markers over 14 days</p>
-              </div>
-            </div>
-            <div className="h-[250px] w-full relative">
-               <div className="absolute inset-0 flex items-end gap-2 px-2">
-                {[4, 5, 7, 9, 6, 4, 3, 5, 7, 8, 6, 4, 3, 2].map((v, i) => (
-                  <div key={i} className="flex-1 bg-primary/10 border border-primary/20 rounded-t-sm" style={{ height: `${v * 10}%` }}></div>
-                ))}
-              </div>
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 1000 300">
-                <path d="M0,200 Q75,180 150,190 T300,160 T450,140 T600,180 T750,210 T900,150 T1000,130" fill="none" stroke="#00f0ff" strokeLinecap="round" strokeWidth="4"></path>
-              </svg>
-            </div>
-          </div>
-
-          {/* Bottom Row: Sleep & Recommendations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-card-dark p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Sleep Architecture</h3>
-              <div className="space-y-6">
-                <div className="relative h-12 w-full flex rounded overflow-hidden">
-                  <div className="w-[15%] bg-slate-900 border-r border-slate-700"></div>
-                  <div className="w-[55%] bg-indigo-500/40 border-r border-slate-700"></div>
-                  <div className="w-[15%] bg-indigo-500"></div>
-                  <div className="w-[15%] bg-accent-blue"></div>
-                </div>
-                <div className="grid grid-cols-4 gap-4">
-                  {[
-                    { label: 'REM', val: '1h 24m', color: 'text-accent-blue' },
-                    { label: 'Deep', val: '1h 10m', color: 'text-indigo-400' },
-                    { label: 'Light', val: '4h 45m', color: 'text-slate-900 dark:text-slate-100' },
-                    { label: 'Awake', val: '53m', color: 'text-slate-500' },
-                  ].map((s) => (
-                    <div key={s.label} className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{s.label}</p>
-                      <p className={`text-lg font-black ${s.color}`}>{s.val}</p>
+              <section className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr,1fr]">
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Últimos 14 dias</p>
+                      <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">Carga, HRV e recuperação</h2>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                    <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                      {data.syncStatus.totalRecords} registros ingeridos
+                    </div>
+                  </div>
 
-            <div className="bg-white dark:bg-card-dark p-8 rounded-xl border border-slate-200 dark:border-slate-800 border-l-4 border-l-primary shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">psychology</span>
-                Recovery Protocol
-              </h3>
-              <div className="space-y-4">
-                <RecoveryProtocolItem 
-                  title="Training Intensity: Level 5" 
-                  description="High Readiness Score suggest you can handle threshold or VO2 max efforts today." 
-                  icon="directions_bike" iconBg="bg-primary/20" iconColor="text-primary" borderVariant="bg-primary/5 border-primary/10"
-                />
-                <RecoveryProtocolItem 
-                  title="Nutritional Focus: Glycogen Reload" 
-                  description="Increase complex carbohydrate intake by 15% for optimal fueling based on load." 
-                  icon="restaurant" iconBg="bg-accent-blue/20" iconColor="text-accent-blue"
-                />
-                <RecoveryProtocolItem 
-                  title="Active Recovery: Mobility Session" 
-                  description="Lower body posterior chain tension indicated. Scheduled 20-min routine recommended." 
-                  icon="self_improvement" iconBg="bg-slate-200 dark:bg-slate-700" iconColor="text-slate-400"
-                />
-              </div>
+                  <div className="mt-6 overflow-x-auto">
+                    <table className="w-full min-w-[560px] text-left text-sm">
+                      <thead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                        <tr>
+                          <th className="pb-3">Data</th>
+                          <th className="pb-3">HRV</th>
+                          <th className="pb-3">Sono</th>
+                          <th className="pb-3">Carga</th>
+                          <th className="pb-3">Recovery</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                        {data.series.map((point) => (
+                          <tr key={point.date}>
+                            <td className="py-3 font-medium text-slate-900 dark:text-slate-100">{point.date}</td>
+                            <td className="py-3 text-slate-600 dark:text-slate-300">{point.hrv ?? "--"}</td>
+                            <td className="py-3 text-slate-600 dark:text-slate-300">{point.sleepHours ?? "--"}</td>
+                            <td className="py-3 text-slate-600 dark:text-slate-300">{point.load ?? "--"}</td>
+                            <td className="py-3 text-slate-600 dark:text-slate-300">{point.recovery ?? "--"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Protocolo</p>
+                  <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">Leitura operacional</h2>
+                  <div className="mt-6 space-y-4">
+                    {data.recommendations.map((item) => (
+                      <div key={item} className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-slate-300">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
             </div>
-          </div>
+          </main>
         </div>
-      </main>
-    </div>
-  )
+      )}
+    </QueryState>
+  );
 }

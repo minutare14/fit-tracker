@@ -18,8 +18,19 @@ export class HevyRepository {
 
     return prisma.integrationConnection.upsert({
       where: { userId_provider: { userId, provider: IntegrationProvider.HEVY } },
-      update: { apiKey, status, lastError: null },
-      create: { userId, provider: IntegrationProvider.HEVY, apiKey, status },
+      update: {
+        apiKey: null,
+        status,
+        lastError: null,
+        credentials: { maskedApiKey: `****${apiKey.slice(-4)}` },
+      },
+      create: {
+        userId,
+        provider: IntegrationProvider.HEVY,
+        apiKey: null,
+        status,
+        credentials: { maskedApiKey: `****${apiKey.slice(-4)}` },
+      },
     });
   }
 

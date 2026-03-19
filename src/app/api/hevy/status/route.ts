@@ -1,6 +1,7 @@
 import { IntegrationProvider } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveUserId } from "@/lib/current-user";
+import { getMaskedIntegrationSecret } from "@/lib/integration-secrets";
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
@@ -19,11 +20,12 @@ export async function GET(req: NextRequest) {
       where: { userId, provider: IntegrationProvider.HEVY },
       orderBy: { startedAt: "desc" },
     });
+    const apiKeyMask = await getMaskedIntegrationSecret(userId, IntegrationProvider.HEVY, "API_KEY");
 
     return NextResponse.json({
       connected: connection?.status === "CONNECTED",
       status: connection?.status || "DISCONNECTED",
-      apiKey: connection?.apiKey ? `****${connection.apiKey.slice(-4)}` : null,
+      apiKey: apiKeyMask || (typeof connection?.credentials === "object" ? (connection.credentials as any)?.maskedApiKey ?? null : null),
       lastSync: connection?.lastSyncedAt || null,
       lastError: connection?.lastError || lastSyncRun?.errorMessage || null,
       stats: {

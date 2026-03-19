@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 interface HevyConfigModalProps {
   userId: string
@@ -12,7 +12,43 @@ interface HevyConfigModalProps {
 export default function HevyConfigModal({ userId, isOpen, onClose, onSuccess }: HevyConfigModalProps) {
   const [apiKey, setApiKey] = useState("")
   const [loading, setLoading] = useState(false)
+  const [loadingConfig, setLoadingConfig] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [currentMask, setCurrentMask] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const controller = new AbortController()
+
+    const loadConfig = async () => {
+      setLoadingConfig(true)
+      try {
+        const res = await fetch(`/api/integrations/hevy/config?userId=${encodeURIComponent(userId)}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+        if (!res.ok) {
+          throw new Error("Failed to load Hevy configuration")
+        }
+
+        const data = await res.json()
+        setCurrentMask(data.apiKeyMask ?? null)
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          setError(err.message)
+        }
+      } finally {
+        setLoadingConfig(false)
+      }
+    }
+
+    void loadConfig()
+
+    return () => controller.abort()
+  }, [isOpen, userId])
 
   if (!isOpen) return null
 
@@ -52,6 +88,20 @@ export default function HevyConfigModal({ userId, isOpen, onClose, onSuccess }: 
         </div>
 
         <div className="space-y-4">
+          {loadingConfig ? (
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-xs text-zinc-400">
+              Carregando configuracao atual...
+            </div>
+          ) : currentMask ? (
+            <div className="rounded-lg border border-sky-500/20 bg-sky-500/10 px-4 py-3 text-xs text-sky-200">
+              API key atual salva no backend: <strong>{currentMask}</strong>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-xs text-zinc-400">
+              Nenhuma API key salva ainda. A credencial fica criptografada no backend.
+            </div>
+          )}
+
           <div>
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5 block">API Key</label>
             <input 

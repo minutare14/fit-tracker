@@ -1,5 +1,6 @@
-import { SyncStatus } from "@prisma/client";
+import { IntegrationProvider, SyncStatus } from "@prisma/client";
 import { resolveUserId } from "@/lib/current-user";
+import { getIntegrationSecret, saveIntegrationSecret } from "@/lib/integration-secrets";
 import { TrainingService } from "@/services/training/training.service";
 import bjjEvolutionMappings from "./reference/bjj-evolution-mapping.json";
 import { HevyClient } from "./client";
@@ -21,19 +22,29 @@ export class HevyService {
     await this.repository.ensureUser(resolvedUserId);
 
     let connection = await this.repository.getConnection(resolvedUserId);
+    let apiKey = (await getIntegrationSecret(resolvedUserId, IntegrationProvider.HEVY, "API_KEY"))?.value
+      ?? connection?.apiKey
+      ?? null;
 
-    if ((!connection || !connection.apiKey) && process.env.HEVY_API_KEY) {
+    if ((!connection || !apiKey) && process.env.HEVY_API_KEY) {
+      await saveIntegrationSecret({
+        userId: resolvedUserId,
+        provider: IntegrationProvider.HEVY,
+        key: "API_KEY",
+        value: process.env.HEVY_API_KEY,
+      });
       connection = await this.repository.saveApiKey(resolvedUserId, process.env.HEVY_API_KEY, "CONNECTED");
+      apiKey = process.env.HEVY_API_KEY;
     }
 
-    if (!connection?.apiKey) {
+    if (!apiKey) {
       throw new Error("Hevy not connected. Configure the API key first.");
     }
 
     return {
       userId: resolvedUserId,
       connection,
-      client: new HevyClient(connection.apiKey),
+      client: new HevyClient(apiKey),
     };
   }
 
@@ -41,10 +52,10 @@ export class HevyService {
     const { userId: resolvedUserId, connection, client } = await this.getClient(userId);
 
     try {
-      const shouldRunFullSync = mode === "full" || !connection.lastSyncedAt;
+      const shouldRunFullSync = mode === "full" || !connection?.lastSyncedAt;
       const events = shouldRunFullSync
         ? []
-        : await client.getWorkoutEvents(connection.lastSyncedAt!.toISOString());
+        : await client.getWorkoutEvents(connection!.lastSyncedAt!.toISOString());
 
       let processed = 0;
       let created = 0;
@@ -247,6 +258,12 @@ export class HevyService {
       throw new Error("Invalid Hevy API Key");
     }
 
+    await saveIntegrationSecret({
+      userId: resolvedUserId,
+      provider: IntegrationProvider.HEVY,
+      key: "API_KEY",
+      value: apiKey,
+    });
     await this.repository.saveApiKey(resolvedUserId, apiKey, "CONNECTED");
     return true;
   }

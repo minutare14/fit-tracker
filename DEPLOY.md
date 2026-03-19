@@ -7,6 +7,7 @@ Set these variables in Dokploy before deploying:
 - `APP_HOST_PORT`: required host port for the Next.js container
 - `APP_INTERNAL_PORT`: container port, usually `3000`
 - `DATABASE_URL`: runtime Prisma connection string
+- `APP_SECRET`: encryption key for integration secrets stored in the backend
 - `HEVY_API_KEY`: runtime Hevy integration key
 - `NEXT_PUBLIC_API_URL`: public URL used by the frontend
 - `POSTGRES_USER`

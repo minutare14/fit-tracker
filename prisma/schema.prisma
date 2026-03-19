@@ -50,6 +50,8 @@ model User {
   derivedMetrics  DerivedMetric[]
   weightEntries   WeightEntry[]
   integrationConnections IntegrationConnection[]
+  profile         UserProfile?
+  integrationSecrets IntegrationSecret[]
   rawEvents       RawEvent[]
   syncRuns        SyncRun[]
   exerciseMappings ExerciseMapping[]
@@ -57,6 +59,31 @@ model User {
   // Internal Training Source of Truth
   trainingPrograms TrainingProgram[]
   hevyProgramLinks HevyProgramLink[]
+}
+
+model UserProfile {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName           String?
+  birthDate             DateTime?
+  sex                   String?
+  heightCm              Float?
+  currentWeightKg       Float?
+  targetCategory        String?
+  beltRank              String?
+  academyTeam           String?
+  primaryGoal           String?
+  injuriesRestrictions  String?
+  timezone              String   @default("America/Bahia")
+  unitSystem            String   @default("metric")
+  dailyCalorieTarget    Float?
+  proteinTargetG        Float?
+  carbsTargetG          Float?
+  fatTargetG            Float?
+  hydrationTargetLiters Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 // --- INTEGRATION PERSISTENCE ---
@@ -78,6 +105,22 @@ model IntegrationConnection {
   syncRuns        SyncRun[]
 
   @@unique([userId, provider])
+}
+
+model IntegrationSecret {
+  id             String              @id @default(cuid())
+  userId         String
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       IntegrationProvider
+  key            String
+  encryptedValue String
+  valueHash      String?
+  last4          String?
+  metadataJson   Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([userId, provider, key])
 }
 
 model SyncRun {

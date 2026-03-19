@@ -1,6 +1,8 @@
+import { IntegrationProvider } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 import { resolveUserId } from "@/lib/current-user";
+import { getMaskedIntegrationSecret } from "@/lib/integration-secrets";
 import { HevyService } from "@/integrations/hevy/service";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +36,12 @@ export async function GET(req: NextRequest) {
     const hevyService = new HevyService();
     const repository = (hevyService as any).repository;
     const connection = await repository.getConnection(userId);
+    const apiKeyMask = await getMaskedIntegrationSecret(userId, IntegrationProvider.HEVY, "API_KEY");
 
     return NextResponse.json({
-      connected: Boolean(connection?.apiKey),
+      connected: connection?.status === "CONNECTED",
       status: connection?.status || "DISCONNECTED",
+      apiKeyMask,
       lastSyncAt: connection?.lastSyncedAt || null,
       lastError: connection?.lastError || null,
     });
