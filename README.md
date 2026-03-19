@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Fit Tracker
 
-## Getting Started
+Frontend em Next.js/TypeScript com backend principal em Python/FastAPI.
 
-First, run the development server:
+## Stack oficial
+
+- frontend: Next.js + React + TypeScript
+- backend: FastAPI + Pydantic + SQLAlchemy + Alembic
+- banco: PostgreSQL
+- jobs/syncs: worker Python em `backend/app/workers`
+
+As regras de negócio, integrações, webhooks, syncs, persistência e métricas analíticas ficam no backend Python. O frontend consome a API em `/api/...` usando `NEXT_PUBLIC_API_BASE_URL`.
+
+## Desenvolvimento
+
+Frontend:
 
 ```bash
+npx prisma generate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Backend:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd backend
+pip install -e .[dev]
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abra o frontend em [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Variáveis importantes
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_API_BASE_URL`: base pública da API FastAPI, por exemplo `http://localhost:8000`
+- `DATABASE_URL`: conexão assíncrona do backend Python
+- `DATABASE_URL_SYNC`: conexão síncrona usada por Alembic
+- `HEVY_API_KEY`: fallback opcional apenas para desenvolvimento
+- `HEALTH_AUTO_EXPORT_SECRET`: fallback opcional para webhook
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Fluxos principais ligados ao backend Python
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `GET/PUT /api/settings/profile`
+- `GET /api/settings/integrations`
+- `PUT /api/settings/integrations/hevy`
+- `POST /api/settings/integrations/hevy/test`
+- `POST /api/settings/integrations/hevy/sync`
+- `PUT /api/settings/integrations/autoexport`
+- `PUT /api/settings/integrations/ai`
+- `GET/POST/PUT/DELETE /api/bjj-sessions`
+- `GET /api/dashboard/overview`
+- `GET /api/recovery/overview`
+- `GET /api/insights/overview`
+- `POST /api/webhooks/health/autoexport`
 
-## Deploy on Vercel
+## Nota sobre rotas Next legadas
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Ainda existem rotas Next antigas fora do fluxo principal. Elas não são mais a fonte oficial de backend e devem ser tratadas como compatibilidade temporária enquanto a migração total para FastAPI é concluída.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy sem colisão de porta
+
+The app no longer assumes host port `3000` is free.
+The main [docker-compose.yml](/Users/emano/OneDrive/Documentos/Downloads/fit-tracker/docker-compose.yml) stays at the repository root so it can be reached directly during operations and deploys.
+
+1. Audit the host and choose a free port automatically:
+
+```bash
+./scripts/deploy/select_port.sh
+```
+
+2. Build and start the stack with the selected port:
+
+```bash
+./scripts/deploy/up.sh
+```
+
+The script inspects the real host with `ss`, `netstat`, or `lsof`, writes `.deploy.env`, and starts Docker Compose with a free `APP_HOST_PORT`.
+
+On the current VPS audited for this project, `3000` and `3010` are already occupied by other workloads, so use an explicitly verified free port such as `3020` only after checking the host.
+
+Useful commands:
+
+```bash
+docker compose --env-file .env --env-file .deploy.env ps
+docker compose --env-file .env --env-file .deploy.env logs -f app
+curl http://127.0.0.1:$(grep APP_HOST_PORT .deploy.env | cut -d= -f2)
+```

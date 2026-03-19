@@ -1,14 +1,42 @@
-import { SyncStatus, IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider, SyncStatus } from "@prisma/client";
 import prisma from "@/lib/prisma";
+import { ensureUser } from "@/lib/current-user";
 
 export class HevyRepository {
+  async ensureUser(userId: string) {
+    return ensureUser(userId);
+  }
+
   async getConnection(userId: string) {
     return prisma.integrationConnection.findUnique({
       where: { userId_provider: { userId, provider: IntegrationProvider.HEVY } },
     });
   }
 
+  async saveApiKey(userId: string, apiKey: string, status = "CONNECTED") {
+    await this.ensureUser(userId);
+
+    return prisma.integrationConnection.upsert({
+      where: { userId_provider: { userId, provider: IntegrationProvider.HEVY } },
+      update: {
+        apiKey: null,
+        status,
+        lastError: null,
+        credentials: { maskedApiKey: `****${apiKey.slice(-4)}` },
+      },
+      create: {
+        userId,
+        provider: IntegrationProvider.HEVY,
+        apiKey: null,
+        status,
+        credentials: { maskedApiKey: `****${apiKey.slice(-4)}` },
+      },
+    });
+  }
+
   async updateConnectionStatus(userId: string, status: string, error?: string, externalId?: string) {
+    await this.ensureUser(userId);
+
     return prisma.integrationConnection.upsert({
       where: { userId_provider: { userId, provider: IntegrationProvider.HEVY } },
       update: { status, lastError: error, externalUserId: externalId },
@@ -16,44 +44,95 @@ export class HevyRepository {
     });
   }
 
-  async updateLastSync(userId: string, status: SyncStatus, processed: number, created = 0, updated = 0, error?: string) {
+  async updateLastSync(
+    userId: string,
+    status: SyncStatus,
+    processed: number,
+    created = 0,
+    updated = 0,
+    error?: string,
+    syncType = "WORKOUTS",
+    metadataJson?: any
+  ) {
     const connection = await this.getConnection(userId);
     if (!connection) return;
+    const finishedAt = new Date();
 
-    // Create Sync Run Log
     await prisma.syncRun.create({
       data: {
         userId,
         connectionId: connection.id,
         provider: IntegrationProvider.HEVY,
+        syncType,
         status,
+        startedAt: finishedAt,
         recordsProcessed: processed,
         recordsCreated: created,
         recordsUpdated: updated,
         errorMessage: error,
-        finishedAt: new Date(),
+        finishedAt,
+        metadataJson,
       },
     });
 
-    // Update Connection
     if (status === SyncStatus.SUCCESS) {
       await prisma.integrationConnection.update({
         where: { id: connection.id },
-        data: { lastSyncedAt: new Date(), lastError: null, status: "CONNECTED" },
+        data: { lastSyncedAt: finishedAt, lastError: null, status: "CONNECTED" },
       });
+      return;
     }
+
+    await prisma.integrationConnection.update({
+      where: { id: connection.id },
+      data: { lastError: error, status: "ERROR" },
+    });
   }
 
-  async upsertWorkout(userId: string, data: any) {
+  async recordRawEvent(userId: string, eventType: string, payloadJson: any, externalEventId?: string) {
+    return prisma.rawEvent.create({
+      data: {
+        userId,
+        provider: IntegrationProvider.HEVY,
+        eventType,
+        externalEventId,
+        payloadJson,
+        status: "RECEIVED",
+        processedAt: new Date(),
+      },
+    });
+  }
+
+  async findWorkoutByExternalId(externalWorkoutId: string) {
+    return prisma.hevyWorkout.findUnique({
+      where: { externalWorkoutId },
+      select: { id: true },
+    });
+  }
+
+  async deleteWorkoutByExternalId(externalWorkoutId: string) {
+    return prisma.hevyWorkout.delete({
+      where: { externalWorkoutId },
+    }).catch(() => null);
+  }
+
+  async findExerciseTemplateByExternalId(externalTemplateId: string) {
+    return prisma.hevyExerciseTemplate.findUnique({
+      where: { externalTemplateId },
+      select: { id: true },
+    });
+  }
+
+  async upsertWorkout(_userId: string, data: any) {
     const { exercises, ...workoutData } = data;
 
-    const exercisesForCreate = exercises.map((ex: any) => {
-      const { id, workoutId, ...exData } = ex;
+    const exercisesForCreate = exercises.map((exercise: any) => {
+      const { id, workoutId, ...exerciseData } = exercise;
       return {
-        ...exData,
+        ...exerciseData,
         sets: {
-          create: ex.sets.map((s: any) => {
-            const { id, exerciseId, ...setData } = s;
+          create: exercise.sets.map((set: any) => {
+            const { id: setId, exerciseId, ...setData } = set;
             return setData;
           })
         }
@@ -66,66 +145,84 @@ export class HevyRepository {
         ...workoutData,
         exercises: {
           deleteMany: {},
-          create: exercisesForCreate
-        }
+          create: exercisesForCreate,
+        },
       },
       create: {
         ...workoutData,
         exercises: {
-          create: exercisesForCreate
-        }
-      }
+          create: exercisesForCreate,
+        },
+      },
     });
   }
 
   async upsertExerciseTemplate(data: any) {
-    const { id, title, type, primary_muscle_group, secondary_muscle_groups, equipment, is_custom } = data;
+    const {
+      id,
+      title,
+      type,
+      exercise_type,
+      muscle_group,
+      primary_muscle_group,
+      other_muscles,
+      secondary_muscle_groups,
+      equipment,
+      equipment_category,
+      is_custom,
+    } = data;
+
     return prisma.hevyExerciseTemplate.upsert({
       where: { externalTemplateId: id },
       update: {
         title,
-        category: type,
-        primaryMuscle: primary_muscle_group,
-        secondaryMuscles: secondary_muscle_groups,
-        equipment,
+        category: exercise_type || type || null,
+        primaryMuscle: primary_muscle_group || muscle_group || null,
+        secondaryMuscles: secondary_muscle_groups || other_muscles || [],
+        equipment: equipment || equipment_category || null,
         isCustom: is_custom,
-        rawPayloadJson: data
+        rawPayloadJson: data,
       },
       create: {
         externalTemplateId: id,
         title,
-        category: type,
-        primaryMuscle: primary_muscle_group,
-        secondaryMuscles: secondary_muscle_groups,
-        equipment,
+        category: exercise_type || type || null,
+        primaryMuscle: primary_muscle_group || muscle_group || null,
+        secondaryMuscles: secondary_muscle_groups || other_muscles || [],
+        equipment: equipment || equipment_category || null,
         isCustom: is_custom,
-        rawPayloadJson: data
+        rawPayloadJson: data,
       },
     });
   }
 
   async getExerciseTemplates(search?: string, category?: string) {
     const where: any = {};
+
     if (search) {
-      where.title = { contains: search, mode: 'insensitive' };
+      where.title = { contains: search, mode: "insensitive" };
     }
+
     if (category) {
       where.category = category;
     }
+
     return prisma.hevyExerciseTemplate.findMany({
       where,
-      orderBy: { title: 'asc' },
+      orderBy: { title: "asc" },
     });
   }
 
   async getMappings(userId: string) {
     return prisma.exerciseMapping.findMany({
       where: { userId, provider: IntegrationProvider.HEVY },
-      orderBy: { internalExerciseName: 'asc' },
+      orderBy: { internalExerciseName: "asc" },
     });
   }
 
   async upsertMapping(userId: string, data: any) {
+    await this.ensureUser(userId);
+
     return prisma.exerciseMapping.upsert({
       where: {
         userId_internalExerciseName_provider: {
@@ -154,12 +251,13 @@ export class HevyRepository {
   async getWorkouts(userId: string, limit = 50) {
     return prisma.hevyWorkout.findMany({
       where: { userId },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       take: limit,
       include: {
         exercises: {
+          orderBy: { orderIndex: "asc" },
           include: {
-            sets: true
+            sets: { orderBy: { orderIndex: "asc" } }
           }
         }
       }
@@ -171,16 +269,15 @@ export class HevyRepository {
       where: { id },
       include: {
         exercises: {
-          orderBy: { orderIndex: 'asc' },
+          orderBy: { orderIndex: "asc" },
           include: {
-            sets: { orderBy: { orderIndex: 'asc' } }
+            sets: { orderBy: { orderIndex: "asc" } }
           }
         }
       }
     });
   }
 
-  // --- Routine Persistence ---
   async updateProgramExternalId(programId: string, externalId: string) {
     return prisma.trainingProgram.update({
       where: { id: programId },
@@ -202,6 +299,8 @@ export class HevyRepository {
   }
 
   async upsertProgramLink(userId: string, data: any) {
+    await this.ensureUser(userId);
+
     const { id, ...updateData } = data;
     if (id) {
       return prisma.hevyProgramLink.update({
@@ -209,6 +308,7 @@ export class HevyRepository {
         data: updateData
       });
     }
+
     return prisma.hevyProgramLink.create({
       data: { ...data, userId }
     });

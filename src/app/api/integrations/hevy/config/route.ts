@@ -1,17 +1,22 @@
+import { IntegrationProvider } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
-import { HevyService } from "@/integrations/hevy/service";
 import { unstable_noStore as noStore } from "next/cache";
+import { resolveUserId } from "@/lib/current-user";
+import { getMaskedIntegrationSecret } from "@/lib/integration-secrets";
+import { HevyService } from "@/integrations/hevy/service";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   noStore();
+
   try {
     const body = await req.json();
-    const { userId, apiKey } = body;
+    const userId = resolveUserId(body.userId);
+    const { apiKey } = body;
 
-    if (!userId || !apiKey) {
-      return NextResponse.json({ error: "userId and apiKey are required" }, { status: 400 });
+    if (!apiKey) {
+      return NextResponse.json({ error: "apiKey is required" }, { status: 400 });
     }
 
     const hevyService = new HevyService();
@@ -25,18 +30,20 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   noStore();
+
   try {
-    const userId = req.nextUrl.searchParams.get("userId") || "default-user";
+    const userId = resolveUserId(req.nextUrl.searchParams.get("userId"));
     const hevyService = new HevyService();
-    // Use repository to get public connection info
-    const repository = (hevyService as any).repository; 
+    const repository = (hevyService as any).repository;
     const connection = await repository.getConnection(userId);
-    
+    const apiKeyMask = await getMaskedIntegrationSecret(userId, IntegrationProvider.HEVY, "API_KEY");
+
     return NextResponse.json({
-      connected: !!connection?.apiKey,
+      connected: connection?.status === "CONNECTED",
       status: connection?.status || "DISCONNECTED",
-      lastSyncAt: connection?.lastSyncedAt,
-      lastError: connection?.lastError,
+      apiKeyMask,
+      lastSyncAt: connection?.lastSyncedAt || null,
+      lastError: connection?.lastError || null,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

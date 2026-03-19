@@ -50,6 +50,10 @@ export class DashboardService {
     const avgSleep = sleepMetrics.length > 0 
       ? sleepMetrics.reduce((acc: number, m: HealthMetric) => acc + m.value, 0) / sleepMetrics.length / 3600
       : 0;
+    const latestDerived = await prisma.derivedMetric.findFirst({
+      where: { userId },
+      orderBy: { date: "desc" }
+    });
 
     // 4. Activity History
     const recentBjj = bjjSessions7d.slice(0, 3).map((s: BjjSession) => ({
@@ -92,13 +96,17 @@ export class DashboardService {
           trend: avgSleep < targets.sleep ? "down" : "up"
         },
         readiness: {
-          value: avgHRV > 60 ? 92 : avgHRV > 40 ? 75 : 45,
+          value: latestDerived?.recovery ?? (avgHRV > 60 ? 92 : avgHRV > 40 ? 75 : 45),
           unit: "%",
-          change: "+5%",
-          trend: "up"
+          change: latestDerived ? "dados reais" : "estimado",
+          trend: (latestDerived?.recovery ?? avgHRV) >= 60 ? "up" : "down"
         }
       },
-      activity: [...recentBjj, ...recentStrength].sort((a, b) => 0.5 - Math.random()),
+      activity: [...recentBjj, ...recentStrength].sort((a, b) => {
+        const left = a.timeAgo === "Today" ? 0 : a.timeAgo === "Yesterday" ? 1 : 2;
+        const right = b.timeAgo === "Today" ? 0 : b.timeAgo === "Yesterday" ? 1 : 2;
+        return left - right;
+      }),
       lastHevyWorkout
     };
   }
