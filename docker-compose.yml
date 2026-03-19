@@ -6,14 +6,22 @@ services:
     container_name: fit-tracker-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${APP_HOST_PORT:-3010}:${APP_INTERNAL_PORT:-3000}"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       HEVY_API_KEY: ${HEVY_API_KEY}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      PORT: ${APP_INTERNAL_PORT:-3000}
+      HOSTNAME: 0.0.0.0
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${APP_INTERNAL_PORT:-3000} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   db:
     image: postgres:16-alpine
@@ -25,6 +33,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-fit_tracker}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

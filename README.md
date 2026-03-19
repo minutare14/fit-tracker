@@ -34,3 +34,29 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Docker Deploy Without Port Collisions
+
+The app no longer assumes host port `3000` is free.
+
+1. Audit the host and choose a free port automatically:
+
+```bash
+./scripts/deploy/select_port.sh
+```
+
+2. Build and start the stack with the selected port:
+
+```bash
+./scripts/deploy/up.sh
+```
+
+The script inspects the real host with `ss`, `netstat`, or `lsof`, writes `.deploy.env`, and starts Docker Compose with a free `APP_HOST_PORT`.
+
+Useful commands:
+
+```bash
+docker compose --env-file .env --env-file .deploy.env ps
+docker compose --env-file .env --env-file .deploy.env logs -f app
+curl http://127.0.0.1:$(grep APP_HOST_PORT .deploy.env | cut -d= -f2)
+```
