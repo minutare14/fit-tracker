@@ -38,6 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Docker Deploy Without Port Collisions
 
 The app no longer assumes host port `3000` is free.
+The main [docker-compose.yml](/Users/emano/OneDrive/Documentos/Downloads/fit-tracker/docker-compose.yml) stays at the repository root so it can be reached directly during operations and deploys.
 
 1. Audit the host and choose a free port automatically:
 
