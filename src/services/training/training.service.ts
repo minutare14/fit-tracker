@@ -1,7 +1,10 @@
 import prisma from "@/lib/prisma";
+import { ensureUser } from "@/lib/current-user";
 
 export class TrainingService {
   async getProgram(userId: string) {
+    await ensureUser(userId);
+
     return prisma.trainingProgram.findFirst({
       where: { userId, isActive: true },
       include: {
@@ -23,6 +26,8 @@ export class TrainingService {
   }
 
   async initializeDefaultProgram(userId: string) {
+    await ensureUser(userId);
+
     // 1. Check if user already has a program
     const existing = await prisma.trainingProgram.findFirst({ where: { userId } });
     if (existing) return existing;

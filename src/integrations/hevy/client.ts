@@ -1,8 +1,16 @@
-import { HevyApiResponse, HevyExerciseTemplate, HevyRoutine, HevyWorkout, HevyFolder, HevyRoutineFolderPayload, HevySyncEvent } from "./types";
+import {
+  HevyApiResponse,
+  HevyExerciseTemplate,
+  HevyFolder,
+  HevyRoutine,
+  HevyRoutineFolderPayload,
+  HevySyncEvent,
+  HevyWorkout,
+} from "./types";
 
 export class HevyClient {
-  private apiKey: string;
-  private baseUrl = "https://api.hevyapp.com/v1";
+  private readonly apiKey: string;
+  private readonly baseUrl = "https://api.hevyapp.com/v1";
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -16,6 +24,7 @@ export class HevyClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -23,21 +32,19 @@ export class HevyClient {
       throw new Error(`Hevy API Error: ${response.status} - ${error}`);
     }
 
-    return response.json() as Promise<T>;
+    const text = await response.text();
+    return text ? JSON.parse(text) as T : ({} as T);
   }
 
-  // Connection Validation
   async validateConnection(): Promise<boolean> {
     try {
-      // Small request to check if key is valid
       await this.getExerciseTemplates(1, 1);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
 
-  // Exercise Templates
   async getExerciseTemplates(page = 1, pageSize = 100): Promise<HevyExerciseTemplate[]> {
     const data = await this.request<HevyApiResponse<HevyExerciseTemplate[]>>(
       `/exercise_templates?page=${page}&pageSize=${pageSize}`
@@ -45,7 +52,10 @@ export class HevyClient {
     return data.exercise_templates || [];
   }
 
-  // Routines
+  async getExerciseTemplateById(id: string): Promise<HevyExerciseTemplate> {
+    return this.request<HevyExerciseTemplate>(`/exercise_templates/${id}`);
+  }
+
   async getRoutines(): Promise<HevyRoutine[]> {
     const data = await this.request<HevyApiResponse<HevyRoutine[]>>("/routines");
     return data.routines || [];
@@ -65,7 +75,6 @@ export class HevyClient {
     });
   }
 
-  // Folders
   async getFolders(): Promise<HevyFolder[]> {
     const data = await this.request<HevyApiResponse<HevyFolder[]>>("/routine_folders");
     return data.folders || [];
@@ -75,14 +84,14 @@ export class HevyClient {
     const payload: HevyRoutineFolderPayload = {
       routine_folder: { title }
     };
+
     return this.request<HevyFolder>("/routine_folders", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   }
 
-  // Workouts (Polling/Sync)
-  async getWorkouts(page = 1, pageSize = 100): Promise<HevyWorkout[]> {
+  async getWorkouts(page = 1, pageSize = 10): Promise<HevyWorkout[]> {
     const data = await this.request<HevyApiResponse<HevyWorkout[]>>(
       `/workouts?page=${page}&pageSize=${pageSize}`
     );
@@ -95,7 +104,7 @@ export class HevyClient {
 
   async getWorkoutEvents(since: string): Promise<HevySyncEvent[]> {
     const data = await this.request<HevyApiResponse<HevySyncEvent[]>>(
-      `/workouts/events?since=${since}`
+      `/workouts/events?since=${encodeURIComponent(since)}`
     );
     return data.events || [];
   }

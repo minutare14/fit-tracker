@@ -1,33 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { unstable_noStore as noStore } from "next/cache";
-import { IntegrationProvider } from "@prisma/client";
+import { resolveUserId } from "@/lib/current-user";
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId") || "default-user";
+    const userId = resolveUserId(req.nextUrl.searchParams.get("userId"));
 
     noStore();
-    // 1. Get all connections
-    const dbConnections = await prisma.integrationConnection.findMany({
-      where: { userId },
-    }).catch(() => []);
 
-    const connections = dbConnections.map((c: any) => ({
-      id: c.id,
-      provider: c.provider,
-      isEnabled: c.status === "CONNECTED" || c.status === "ACTIVE",
-      status: c.status,
-      lastSyncAt: c.lastSyncedAt
-    }));
-
-    // 2. Get recent sync runs
+    const dbConnections = await prisma.integrationConnection.findMany({ where: { userId } }).catch(() => []);
     const dbSyncRuns = await prisma.syncRun.findMany({
       where: { userId },
       orderBy: { startedAt: "desc" },
-      take: 10
+      take: 10,
     }).catch(() => []);
+    const hevyWorkoutsCount = await prisma.hevyWorkout.count({ where: { userId } });
+    const hevyRoutinesCount = await prisma.trainingRoutine.count({ where: { program: { userId } } });
+    const totalErrors = await prisma.syncRun.count({ where: { userId, status: "FAILURE" } });
+
+    const connections = dbConnections.map((connection: any) => ({
+      id: connection.id,
+      provider: connection.provider,
+      isEnabled: connection.status === "CONNECTED" || connection.status === "ACTIVE",
+      status: connection.status,
+      lastSyncAt: connection.lastSyncedAt,
+    }));
 
     const syncRuns = dbSyncRuns.map((run: any) => ({
       id: run.id,
@@ -35,24 +34,33 @@ export async function GET(req: NextRequest) {
       provider: run.provider,
       status: run.status,
       recordsCount: run.recordsProcessed,
-      errorMessage: run.errorMessage
+      errorMessage: run.errorMessage,
+      syncType: run.syncType,
+      finishedAt: run.finishedAt,
     }));
 
-    // 3. Get aggregate stats
+    const completedRuns = dbSyncRuns.filter((run: any) => run.finishedAt);
+    const successfulRuns = dbSyncRuns.filter((run: any) => run.status === "SUCCESS");
+    const successRate = dbSyncRuns.length === 0 ? 0 : Number(((successfulRuns.length / dbSyncRuns.length) * 100).toFixed(1));
+
+    const avgDurationMs = completedRuns.length === 0
+      ? 0
+      : Math.round(
+          completedRuns.reduce((acc: number, run: any) => {
+            return acc + Math.max(0, new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime());
+          }, 0) / completedRuns.length
+        );
+
     const stats = {
       hevy: {
-        workoutsCount: await prisma.hevyWorkout.count({ where: { userId } }),
-        routinesCount: await prisma.trainingRoutine.count({ 
-          where: { program: { userId } } 
-        }),
+        workoutsCount: hevyWorkoutsCount,
+        routinesCount: hevyRoutinesCount,
       },
-      successRate: 98.4,
-      avgSyncTime: "1.2s",
-      totalErrors: await prisma.syncRun.count({
-        where: { userId, status: "FAILURE" },
-      }),
+      successRate,
+      avgSyncTime: avgDurationMs,
+      totalErrors,
     };
-    
+
     return NextResponse.json({ connections, syncRuns, stats });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,28 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { resolveUserId } from "@/lib/current-user";
 import { HevyService } from "@/integrations/hevy/service";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const userId = "user_default";
-    const { type } = await req.json(); // "workouts", "templates", or "all"
+    const body = await req.json().catch(() => ({}));
+    const userId = resolveUserId(body.userId);
+    const type = body.type || "all";
     const hevyService = new HevyService();
-    
-    let results = { workouts: 0, templates: 0 };
+
+    const results: Record<string, any> = {};
 
     if (type === "workouts" || type === "all") {
-      const res = await hevyService.syncWorkoutsFromHevy(userId);
-      results.workouts = res.events || res.created;
+      results.workouts = await hevyService.syncWorkoutsFromHevy(userId, body.mode || "delta");
     }
 
     if (type === "templates" || type === "all") {
-      const res = await hevyService.syncExerciseTemplates(userId);
-      results.templates = res.count;
+      results.templates = await hevyService.syncExerciseTemplates(userId);
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    if (type === "routines") {
+      results.routines = await hevyService.syncProgramToHevy(userId);
+    }
+
+    return NextResponse.json({
+      success: true,
       message: "Synchronization completed",
-      results 
+      results,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

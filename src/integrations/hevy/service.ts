@@ -1,10 +1,11 @@
-import { HevyClient } from "./client";
-import { HevyRepository } from "./repository";
-import { ProgramToHevyMapper } from "./mappers/program_to_hevy";
-import { HevyToLocalMapper } from "./mappers/hevy_to_local_logs";
 import { SyncStatus } from "@prisma/client";
-import prisma from "@/lib/prisma";
-import { TrainingService } from "../../services/training/training.service";
+import { resolveUserId } from "@/lib/current-user";
+import { TrainingService } from "@/services/training/training.service";
+import bjjEvolutionMappings from "./reference/bjj-evolution-mapping.json";
+import { HevyClient } from "./client";
+import { HevyToLocalMapper } from "./mappers/hevy_to_local_logs";
+import { ProgramToHevyMapper } from "./mappers/program_to_hevy";
+import { HevyRepository } from "./repository";
 
 export class HevyService {
   private repository: HevyRepository;
@@ -15,91 +16,170 @@ export class HevyService {
     this.trainingService = new TrainingService();
   }
 
-  async syncWorkoutsFromHevy(userId: string) {
-    const connection = await this.repository.getConnection(userId);
-    if (!connection || !connection.apiKey) throw new Error("Hevy not connected");
+  private async getClient(userId: string) {
+    const resolvedUserId = resolveUserId(userId);
+    await this.repository.ensureUser(resolvedUserId);
 
-    const client = new HevyClient(connection.apiKey);
-    
+    let connection = await this.repository.getConnection(resolvedUserId);
+
+    if ((!connection || !connection.apiKey) && process.env.HEVY_API_KEY) {
+      connection = await this.repository.saveApiKey(resolvedUserId, process.env.HEVY_API_KEY, "CONNECTED");
+    }
+
+    if (!connection?.apiKey) {
+      throw new Error("Hevy not connected. Configure the API key first.");
+    }
+
+    return {
+      userId: resolvedUserId,
+      connection,
+      client: new HevyClient(connection.apiKey),
+    };
+  }
+
+  async syncWorkoutsFromHevy(userId: string, mode: "delta" | "full" = "delta") {
+    const { userId: resolvedUserId, connection, client } = await this.getClient(userId);
+
     try {
-      // Use polling with /events endpoint for incremental sync
-      const lastSync = connection.lastSyncedAt ? connection.lastSyncedAt.toISOString() : "2024-01-01T00:00:00Z";
-      const events = await client.getWorkoutEvents(lastSync);
-      
+      const shouldRunFullSync = mode === "full" || !connection.lastSyncedAt;
+      const events = shouldRunFullSync
+        ? []
+        : await client.getWorkoutEvents(connection.lastSyncedAt!.toISOString());
+
+      let processed = 0;
       let created = 0;
       let updated = 0;
+      let deleted = 0;
 
       for (const event of events) {
+        await this.repository.recordRawEvent(resolvedUserId, `hevy.workout.${event.type}`, event, event.id);
+
         if (event.type === "deleted") {
-          // Handle deletion if necessary
+          await this.repository.deleteWorkoutByExternalId(event.workout_id);
+          deleted += 1;
+          processed += 1;
           continue;
         }
 
         const apiWorkout = await client.getWorkoutById(event.workout_id);
-        const workoutModel = HevyToLocalMapper.toWorkoutModel(userId, apiWorkout);
-        const exercises = apiWorkout.exercises.map((ex, exIdx) => ({
-          ...HevyToLocalMapper.toExerciseModel("", ex, exIdx),
-          sets: ex.sets.map((s, sIdx) => HevyToLocalMapper.toSetModel("", s, sIdx))
+        await this.repository.recordRawEvent(resolvedUserId, "hevy.workout.payload", apiWorkout, apiWorkout.id);
+
+        const existingWorkout = await this.repository.findWorkoutByExternalId(apiWorkout.id);
+        const workoutModel = HevyToLocalMapper.toWorkoutModel(resolvedUserId, apiWorkout);
+        const exercises = apiWorkout.exercises.map((exercise, exerciseIndex) => ({
+          ...HevyToLocalMapper.toExerciseModel("", exercise, exerciseIndex),
+          sets: exercise.sets.map((set, setIndex) => HevyToLocalMapper.toSetModel("", set, setIndex)),
         }));
 
-        await this.repository.upsertWorkout(userId, { ...workoutModel, exercises });
-        if (event.type === "created") created++;
-        else updated++;
+        await this.repository.upsertWorkout(resolvedUserId, { ...workoutModel, exercises });
+
+        if (existingWorkout) {
+          updated += 1;
+        } else {
+          created += 1;
+        }
+
+        processed += 1;
       }
 
-      // If no events but user wants a full refresh or first sync
-      if (events.length === 0 && !connection.lastSyncedAt) {
-         const initialWorkouts = await client.getWorkouts(1, 50);
-         for (const apiWorkout of initialWorkouts) {
-            const workoutModel = HevyToLocalMapper.toWorkoutModel(userId, apiWorkout);
-            const exercises = apiWorkout.exercises.map((ex, exIdx) => ({
-              ...HevyToLocalMapper.toExerciseModel("", ex, exIdx),
-              sets: ex.sets.map((s, sIdx) => HevyToLocalMapper.toSetModel("", s, sIdx))
+      if (shouldRunFullSync) {
+        let page = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+          const workouts = await client.getWorkouts(page, 10);
+
+          if (workouts.length === 0) {
+            hasMore = false;
+            continue;
+          }
+
+          for (const apiWorkout of workouts) {
+            await this.repository.recordRawEvent(resolvedUserId, "hevy.workout.payload", apiWorkout, apiWorkout.id);
+
+            const existingWorkout = await this.repository.findWorkoutByExternalId(apiWorkout.id);
+            const workoutModel = HevyToLocalMapper.toWorkoutModel(resolvedUserId, apiWorkout);
+            const exercises = apiWorkout.exercises.map((exercise, exerciseIndex) => ({
+              ...HevyToLocalMapper.toExerciseModel("", exercise, exerciseIndex),
+              sets: exercise.sets.map((set, setIndex) => HevyToLocalMapper.toSetModel("", set, setIndex)),
             }));
-            await this.repository.upsertWorkout(userId, { ...workoutModel, exercises });
-            created++;
-         }
+
+            await this.repository.upsertWorkout(resolvedUserId, { ...workoutModel, exercises });
+
+            if (existingWorkout) {
+              updated += 1;
+            } else {
+              created += 1;
+            }
+
+            processed += 1;
+          }
+
+          hasMore = workouts.length === 10;
+          page += 1;
+        }
       }
 
-      await this.repository.updateLastSync(userId, SyncStatus.SUCCESS, events.length || created, created, updated);
-      return { success: true, events: events.length, created, updated };
+      await this.repository.updateLastSync(
+        resolvedUserId,
+        SyncStatus.SUCCESS,
+        processed,
+        created,
+        updated,
+        undefined,
+        "WORKOUTS",
+        { deleted, mode: shouldRunFullSync ? "full" : "delta" }
+      );
+
+      return {
+        success: true,
+        processed,
+        created,
+        updated,
+        deleted,
+        mode: shouldRunFullSync ? "full" : "delta",
+      };
     } catch (error: any) {
-      await this.repository.updateLastSync(userId, SyncStatus.FAILURE, 0, 0, 0, error.message);
+      await this.repository.updateLastSync(
+        resolvedUserId,
+        SyncStatus.FAILURE,
+        0,
+        0,
+        0,
+        error.message,
+        "WORKOUTS"
+      );
       throw error;
     }
   }
 
   async syncProgramToHevy(userId: string) {
-    const connection = await this.repository.getConnection(userId);
-    if (!connection || !connection.apiKey) throw new Error("Hevy not connected");
+    const { userId: resolvedUserId, client } = await this.getClient(userId);
+    const program = await this.trainingService.getProgram(resolvedUserId);
 
-    const client = new HevyClient(connection.apiKey);
-    const program = await this.trainingService.getProgram(userId);
-    if (!program) throw new Error("No active training program found");
+    if (!program) {
+      throw new Error("No active training program found");
+    }
 
     try {
-      // 1. Ensure Folder exists: "BJJ Performance"
-      const folderId = await this.createOrGetHevyFolder(client, program.id, "BJJ Performance");
-      
+      const folderId = await this.createOrGetHevyFolder(client, "BJJ Performance");
       const results = [];
-      const programLinks = await this.repository.getProgramLinks(userId, program.id);
+      const programLinks = await this.repository.getProgramLinks(resolvedUserId, program.id);
 
       for (const routine of program.routines) {
         const payload = ProgramToHevyMapper.toHevyRoutine(routine as any);
-        if (folderId) payload.folder_id = folderId.toString();
+        if (folderId) {
+          payload.folder_id = folderId.toString();
+        }
 
-        let result;
-        const existingLink = programLinks.find((l: any) => l.localRoutineId === routine.id);
+        const existingLink = programLinks.find((link: any) => link.localRoutineId === routine.id);
 
         try {
-          if (existingLink?.hevyRoutineId) {
-            result = await client.updateRoutine(existingLink.hevyRoutineId, payload);
-          } else {
-            result = await client.createRoutine(payload);
-          }
+          const result = existingLink?.hevyRoutineId
+            ? await client.updateRoutine(existingLink.hevyRoutineId, payload)
+            : await client.createRoutine(payload);
 
-          // Persistence Step: Link local ↔ Hevy
-          await this.repository.upsertProgramLink(userId, {
+          await this.repository.upsertProgramLink(resolvedUserId, {
             id: existingLink?.id,
             trainingProgramId: program.id,
             hevyFolderId: folderId.toString(),
@@ -116,7 +196,7 @@ export class HevyService {
             status: "SUCCESS"
           });
         } catch (routineError: any) {
-          await this.repository.upsertProgramLink(userId, {
+          await this.repository.upsertProgramLink(resolvedUserId, {
             id: existingLink?.id,
             trainingProgramId: program.id,
             hevyFolderId: folderId.toString(),
@@ -124,6 +204,7 @@ export class HevyService {
             syncStatus: "FAILURE",
             lastError: routineError.message
           });
+
           results.push({
             routine: routine.title,
             status: "FAILURE",
@@ -132,80 +213,111 @@ export class HevyService {
         }
       }
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         folder: "BJJ Performance",
         folderId,
-        routines: results 
+        routines: results
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Hevy Sync Error:", error);
       throw error;
     }
   }
 
-  private async createOrGetHevyFolder(client: HevyClient, programId: string, title = "BJJ Performance"): Promise<number> {
+  private async createOrGetHevyFolder(client: HevyClient, title = "BJJ Performance") {
     const folders = await client.getFolders();
-    const existingFolder = folders.find(f => f.title === title);
-    
+    const existingFolder = folders.find((folder) => folder.title === title);
+
     if (existingFolder) {
       return existingFolder.id;
     }
-    
+
     const newFolder = await client.createFolder(title);
     return newFolder.id;
   }
 
   async validateAndSaveConnection(userId: string, apiKey: string) {
+    const resolvedUserId = resolveUserId(userId);
     const client = new HevyClient(apiKey);
     const isValid = await client.validateConnection();
-    
-    if (isValid) {
-      await this.repository.updateConnectionStatus(userId, "CONNECTED", undefined, undefined);
-      const connection = await this.repository.getConnection(userId);
-      if (connection) {
-        await prisma.integrationConnection.update({
-          where: { id: connection.id },
-          data: { apiKey }
-        });
-      }
-    } else {
-      await this.repository.updateConnectionStatus(userId, "ERROR", "Invalid API Key");
+
+    if (!isValid) {
+      await this.repository.updateConnectionStatus(resolvedUserId, "ERROR", "Invalid API Key");
       throw new Error("Invalid Hevy API Key");
     }
-    
-    return isValid;
+
+    await this.repository.saveApiKey(resolvedUserId, apiKey, "CONNECTED");
+    return true;
   }
 
   async syncExerciseTemplates(userId: string) {
-    const connection = await this.repository.getConnection(userId);
-    if (!connection || !connection.apiKey) throw new Error("Hevy not connected");
+    const { userId: resolvedUserId, client } = await this.getClient(userId);
 
-    const client = new HevyClient(connection.apiKey);
-    
     try {
       let page = 1;
       let totalProcessed = 0;
+      let created = 0;
+      let updated = 0;
       let hasMore = true;
 
       while (hasMore) {
         const templates = await client.getExerciseTemplates(page, 100);
+
         if (templates.length === 0) {
           hasMore = false;
-          break;
+          continue;
         }
 
         for (const template of templates) {
+          await this.repository.recordRawEvent(resolvedUserId, "hevy.exercise_template.payload", template, template.id);
+
+          const existingTemplate = await this.repository.findExerciseTemplateByExternalId(template.id);
           await this.repository.upsertExerciseTemplate(template);
-          totalProcessed++;
+
+          if (existingTemplate) {
+            updated += 1;
+          } else {
+            created += 1;
+          }
+
+          totalProcessed += 1;
         }
-        
-        page++;
-        if (page > 20) break; // Safety break
+
+        hasMore = templates.length === 100;
+        page += 1;
       }
 
-      return { success: true, count: totalProcessed };
+      const mappingsSeeded = await this.seedMappingsFromReference(resolvedUserId);
+
+      await this.repository.updateLastSync(
+        resolvedUserId,
+        SyncStatus.SUCCESS,
+        totalProcessed,
+        created,
+        updated,
+        undefined,
+        "TEMPLATES",
+        { mappingsSeeded }
+      );
+
+      return {
+        success: true,
+        count: totalProcessed,
+        created,
+        updated,
+        mappingsSeeded,
+      };
     } catch (error: any) {
+      await this.repository.updateLastSync(
+        resolvedUserId,
+        SyncStatus.FAILURE,
+        0,
+        0,
+        0,
+        error.message,
+        "TEMPLATES"
+      );
       throw error;
     }
   }
@@ -215,28 +327,71 @@ export class HevyService {
   }
 
   async getMappings(userId: string) {
-    return this.repository.getMappings(userId);
+    return this.repository.getMappings(resolveUserId(userId));
   }
 
   async upsertMapping(userId: string, data: any) {
-    return this.repository.upsertMapping(userId, data);
+    return this.repository.upsertMapping(resolveUserId(userId), data);
   }
 
   async deleteMapping(userId: string, internalName: string) {
-    return this.repository.deleteMapping(userId, internalName);
+    return this.repository.deleteMapping(resolveUserId(userId), internalName);
   }
 
   async getWorkouts(userId: string, limit = 50) {
-    return this.repository.getWorkouts(userId, limit);
+    const workouts = await this.repository.getWorkouts(resolveUserId(userId), limit);
+
+    return workouts.map((workout: any) => {
+      const volumeKg = Number(workout.rawPayloadJson?.volume_kg) || workout.exercises.reduce(
+        (workoutAcc: number, exercise: any) => workoutAcc + exercise.sets.reduce(
+          (setAcc: number, set: any) => setAcc + (Number(set.weightKg) || 0) * (Number(set.reps) || 0),
+          0
+        ),
+        0
+      );
+
+      const prsCount = workout.exercises.reduce(
+        (acc: number, exercise: any) =>
+          acc + exercise.sets.filter((set: any) => Boolean(set.rawPayloadJson?.is_personal_record)).length,
+        0
+      );
+
+      return {
+        ...workout,
+        volumeKg,
+        exercisesCount: workout.exercises.length,
+        setsCount: workout.exercises.reduce((acc: number, exercise: any) => acc + exercise.sets.length, 0),
+        prsCount,
+      };
+    });
   }
 
   async getWorkoutById(id: string) {
-    return this.repository.getWorkoutById(id);
+    const workout: any = await this.repository.getWorkoutById(id);
+    if (!workout) {
+      return null;
+    }
+
+    const volumeKg = Number(workout.rawPayloadJson?.volume_kg) || workout.exercises.reduce(
+      (workoutAcc: number, exercise: any) => workoutAcc + exercise.sets.reduce(
+        (setAcc: number, set: any) => setAcc + (Number(set.weightKg) || 0) * (Number(set.reps) || 0),
+        0
+      ),
+      0
+    );
+
+    return {
+      ...workout,
+      volumeKg,
+      exercisesCount: workout.exercises.length,
+      setsCount: workout.exercises.reduce((acc: number, exercise: any) => acc + exercise.sets.length, 0),
+    };
   }
 
   async createDefaultBJJProgram(userId: string) {
-    const program = await this.trainingService.initializeDefaultProgram(userId);
-    
+    const resolvedUserId = resolveUserId(userId);
+    const program = await this.trainingService.initializeDefaultProgram(resolvedUserId);
+
     const defaultMappings = [
       { internal: "Bench Press", externalId: "79D0BB3A", title: "Bench Press (Barbell)" },
       { internal: "Incline Bench Press (Barbell)", externalId: "50DFDFAB", title: "Incline Bench Press (Barbell)" },
@@ -254,14 +409,37 @@ export class HevyService {
       { internal: "Romanian Deadlift (Dumbbell)", externalId: "72CFFAD5", title: "Romanian Deadlift (Dumbbell)" }
     ];
 
-    for (const m of defaultMappings) {
-      await this.upsertMapping(userId, {
-        internalExerciseName: m.internal,
-        externalExerciseTemplateId: m.externalId,
-        externalExerciseTitle: m.title
+    for (const mapping of defaultMappings) {
+      await this.upsertMapping(resolvedUserId, {
+        internalExerciseName: mapping.internal,
+        externalExerciseTemplateId: mapping.externalId,
+        externalExerciseTitle: mapping.title
       });
     }
 
     return program;
+  }
+
+  private async seedMappingsFromReference(userId: string) {
+    let seeded = 0;
+
+    for (const [internalExerciseName, mapping] of Object.entries(bjjEvolutionMappings)) {
+      const existingTemplate = await this.repository.findExerciseTemplateByExternalId(mapping.id);
+
+      if (!existingTemplate) {
+        continue;
+      }
+
+      await this.repository.upsertMapping(userId, {
+        internalExerciseName,
+        externalExerciseTemplateId: mapping.id,
+        externalExerciseTitle: mapping.title,
+        notes: "Imported from bjj evolution reference mapping",
+      });
+
+      seeded += 1;
+    }
+
+    return seeded;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, Database, RefreshCw, ShieldCheck, Zap, ChevronRight, Settings } from "lucide-react";
+import { Activity, ChevronRight, Database, RefreshCw, Settings, ShieldCheck, Zap } from "lucide-react";
 import { format } from "date-fns";
 
 export function OverviewTab({ status, syncing, onSync }: any) {
@@ -15,83 +15,90 @@ export function OverviewTab({ status, syncing, onSync }: any) {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {kpis.map((kpi, i) => (
-          <div key={i} className="bg-[#141417] border border-zinc-800/50 p-6 rounded-2xl hover:border-sky-400/20 transition-all group shadow-sm hover:shadow-sky-400/5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2.5 bg-zinc-900 rounded-xl group-hover:scale-110 transition-transform border border-zinc-800/50">
-                <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {kpis.map((kpi, index) => (
+          <div key={index} className="rounded-2xl border border-zinc-800/50 bg-[#141417] p-6 shadow-sm transition-all hover:border-sky-400/20 hover:shadow-sky-400/5 group">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="rounded-xl border border-zinc-800/50 bg-zinc-900 p-2.5 transition-transform group-hover:scale-110">
+                <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
               </div>
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{kpi.label}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{kpi.label}</span>
             </div>
-            <div className="text-2xl font-bold text-white truncate uppercase tracking-tight">{kpi.value}</div>
+            <div className="truncate text-2xl font-bold uppercase tracking-tight text-white">{kpi.value}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 leading-relaxed">
-        <div className="bg-[#141417] border border-zinc-800/50 p-8 rounded-2xl shadow-sm">
-          <h3 className="text-xl font-bold mb-2 uppercase tracking-wide">Sync Operations</h3>
-          <p className="text-zinc-500 mb-6 font-light text-sm">Sincronize seus dados reais do Hevy Pro com o BJJ Lab Elite Performance.</p>
+      <div className="grid grid-cols-1 gap-6 leading-relaxed md:grid-cols-2">
+        <div className="rounded-2xl border border-zinc-800/50 bg-[#141417] p-8 shadow-sm">
+          <h3 className="mb-2 text-xl font-bold uppercase tracking-wide">Sync Operations</h3>
+          <p className="mb-6 text-sm font-light text-zinc-500">Sincronize seus dados reais do Hevy Pro com o BJJ Lab Elite Performance.</p>
+          {status?.lastError && (
+            <div className="mb-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs text-red-300">
+              {status.lastError}
+            </div>
+          )}
           <div className="space-y-3">
-             <button 
+            <button
               onClick={() => onSync("templates")}
               disabled={syncing}
-              className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900 border border-zinc-800 hover:border-sky-400/50 rounded-xl group transition-all"
-             >
-                <div className="flex items-center gap-3">
-                  <Database className="w-5 h-5 text-zinc-400" />
-                  <span className="text-sm font-bold text-zinc-300">Sync Exercise Catalog</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-sky-400 transition-colors" />
-             </button>
-             <button 
+              className="group flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 transition-all hover:border-sky-400/50"
+            >
+              <div className="flex items-center gap-3">
+                <Database className="h-5 w-5 text-zinc-400" />
+                <span className="text-sm font-bold text-zinc-300">Sync Exercise Catalog</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-zinc-600 transition-colors group-hover:text-sky-400" />
+            </button>
+            <button
               onClick={() => onSync("workouts")}
               disabled={syncing}
-              className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900 border border-zinc-800 hover:border-sky-400/50 rounded-xl group transition-all"
-             >
-                <div className="flex items-center gap-3">
-                  <Zap className="w-5 h-5 text-zinc-400" />
-                  <span className="text-sm font-bold text-zinc-300">Sync Latest Workouts</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-sky-400 transition-colors" />
-             </button>
+              className="group flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 transition-all hover:border-sky-400/50"
+            >
+              <div className="flex items-center gap-3">
+                <Zap className="h-5 w-5 text-zinc-400" />
+                <span className="text-sm font-bold text-zinc-300">Sync Latest Workouts</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-zinc-600 transition-colors group-hover:text-sky-400" />
+            </button>
           </div>
         </div>
 
-        <div className="bg-sky-950/20 border border-sky-400/20 p-8 rounded-2xl relative overflow-hidden group shadow-xl">
-           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-sky-400/10 rounded-full blur-3xl transition-all group-hover:scale-150"></div>
-           <h3 className="text-xl font-bold mb-2 text-sky-100 flex items-center gap-2 uppercase tracking-wide">
-             <Settings className="w-5 h-5 text-sky-400" />
-             Routinary Framework
-           </h3>
-           <p className="text-sky-200/60 mb-6 font-light text-sm">Synchronizes your local training routines to Hevy, maintaining your BJJ folder structure and order.</p>
-           <div className="flex gap-4">
-             <button 
+        <div className="group relative overflow-hidden rounded-2xl border border-sky-400/20 bg-sky-950/20 p-8 shadow-xl">
+          <div className="absolute -bottom-12 -right-12 h-48 w-48 rounded-full bg-sky-400/10 blur-3xl transition-all group-hover:scale-150"></div>
+          <h3 className="mb-2 flex items-center gap-2 text-xl font-bold uppercase tracking-wide text-sky-100">
+            <Settings className="h-5 w-5 text-sky-400" />
+            Routinary Framework
+          </h3>
+          <p className="mb-6 text-sm font-light text-sky-200/60">Synchronizes your local training routines to Hevy, maintaining your BJJ folder structure and order.</p>
+          <div className="flex gap-4">
+            <button
               onClick={async () => {
                 const res = await fetch("/api/hevy/routines/defaults", { method: "POST" });
                 const data = await res.json();
                 if (res.ok) alert("Program mapped and initialized locally!");
                 else alert("Error: " + data.error);
               }}
-              className="px-6 py-3 bg-zinc-900 border border-zinc-800 text-sky-400 font-black rounded-xl hover:bg-zinc-800 transition-colors text-[10px] uppercase tracking-widest shadow-lg"
-             >
-               Init Blueprint
-             </button>
-             <button 
+              className="rounded-xl border border-zinc-800 bg-zinc-900 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-sky-400 shadow-lg transition-colors hover:bg-zinc-800"
+            >
+              Init Blueprint
+            </button>
+            <button
               onClick={async () => {
-                onSync("all");
-                const res = await fetch("/api/hevy/sync", { 
-                  method: "POST", 
-                  body: JSON.stringify({ type: "routines" }) 
+                const res = await fetch("/api/hevy/sync", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ type: "routines" })
                 });
+                const data = await res.json();
                 if (res.ok) alert("Routines exported to Hevy Folder successfully!");
+                else alert("Error: " + data.error);
               }}
-              className="px-6 py-3 bg-sky-500 text-sky-950 font-black rounded-xl hover:bg-sky-300 transition-colors text-[10px] uppercase tracking-widest shadow-lg shadow-sky-500/20"
-             >
-               Export to Hevy
-             </button>
-           </div>
+              className="rounded-xl bg-sky-500 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-sky-950 shadow-lg shadow-sky-500/20 transition-colors hover:bg-sky-300"
+            >
+              Export to Hevy
+            </button>
+          </div>
         </div>
       </div>
     </div>
