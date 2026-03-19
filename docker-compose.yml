@@ -3,14 +3,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     container_name: fit-tracker-app
     restart: unless-stopped
     ports:
       - "${APP_HOST_PORT:-3010}:${APP_INTERNAL_PORT:-3000}"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      HEVY_API_KEY: ${HEVY_API_KEY}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      DATABASE_URL: ${DATABASE_URL:-}
+      HEVY_API_KEY: ${HEVY_API_KEY:-}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
       PORT: ${APP_INTERNAL_PORT:-3000}
       HOSTNAME: 0.0.0.0
     depends_on:

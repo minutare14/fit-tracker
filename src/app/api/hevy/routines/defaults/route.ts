@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveUserId } from "@/lib/current-user";
-import { HevyService } from "@/integrations/hevy/service";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const userId = resolveUserId(body.userId);
+    const { HevyService } = await import("@/integrations/hevy/service");
     const hevyService = new HevyService();
     const program = await hevyService.createDefaultBJJProgram(userId);
 
