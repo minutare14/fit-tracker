@@ -54,6 +54,8 @@ The main [docker-compose.yml](/Users/emano/OneDrive/Documentos/Downloads/fit-tra
 
 The script inspects the real host with `ss`, `netstat`, or `lsof`, writes `.deploy.env`, and starts Docker Compose with a free `APP_HOST_PORT`.
 
+On the current VPS audited for this project, `3000` and `3010` are already occupied by other workloads, so use an explicitly verified free port such as `3020` only after checking the host.
+
 Useful commands:
 
 ```bash
