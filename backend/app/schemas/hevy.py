@@ -1,21 +1,23 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
+
+from app.schemas.common import APIModel
 
 
-class HevyConnectionCreate(BaseModel):
+class HevyConnectionCreate(APIModel):
     user_id: str = Field(default="default-user")
     api_key: str
     external_user_id: str | None = None
 
 
-class HevySyncRequest(BaseModel):
+class HevySyncRequest(APIModel):
     user_id: str = Field(default="default-user")
     mode: Literal["delta", "full"] = "delta"
 
 
-class HevySyncResult(BaseModel):
+class HevySyncResult(APIModel):
     success: bool
     sync_type: str
     processed: int
@@ -24,7 +26,7 @@ class HevySyncResult(BaseModel):
     metadata: dict | None = None
 
 
-class HevyStatusRead(BaseModel):
+class HevyStatusRead(APIModel):
     user_id: str
     connected: bool
     status: str
@@ -34,9 +36,7 @@ class HevyStatusRead(BaseModel):
     exercise_template_count: int = 0
 
 
-class HevyExerciseTemplateRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class HevyExerciseTemplateRead(APIModel):
     id: str
     external_template_id: str
     title: str
@@ -46,9 +46,7 @@ class HevyExerciseTemplateRead(BaseModel):
     is_custom: bool
 
 
-class HevyWorkoutSetRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class HevyWorkoutSetRead(APIModel):
     id: str
     order_index: int
     set_type: str
@@ -56,18 +54,14 @@ class HevyWorkoutSetRead(BaseModel):
     weight_kg: float | None = None
 
 
-class HevyWorkoutExerciseRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class HevyWorkoutExerciseRead(APIModel):
     id: str
     exercise_name: str
     order_index: int
     sets: list[HevyWorkoutSetRead]
 
 
-class HevyWorkoutRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class HevyWorkoutRead(APIModel):
     id: str
     external_workout_id: str
     title: str | None = None

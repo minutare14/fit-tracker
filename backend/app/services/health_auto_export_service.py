@@ -51,4 +51,8 @@ class HealthAutoExportService:
                     errors += 1
 
         await self.session.commit()
+        connection = await self.integration_repository.get_connection(payload.user_id, IntegrationProvider.HEALTH_AUTO_EXPORT)
+        if connection:
+            await self.integration_repository.touch_connection_sync(connection)
+            await self.session.commit()
         return WebhookIngestResult(success=errors == 0, processed=processed, errors=errors)

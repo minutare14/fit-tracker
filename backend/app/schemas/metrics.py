@@ -1,11 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from app.schemas.common import APIModel
 
 
-class DailyRollupRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class DailyRollupRead(APIModel):
     id: str
     user_id: str
     date: datetime

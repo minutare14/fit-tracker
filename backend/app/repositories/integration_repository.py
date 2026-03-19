@@ -28,6 +28,7 @@ class IntegrationRepository(BaseRepository):
         api_key: str | None = None,
         external_user_id: str | None = None,
         last_error: str | None = None,
+        credentials: dict | None = None,
     ) -> IntegrationConnection:
         stmt = insert(IntegrationConnection).values(
             user_id=user_id,
@@ -36,6 +37,7 @@ class IntegrationRepository(BaseRepository):
             api_key=api_key,
             external_user_id=external_user_id,
             last_error=last_error,
+            credentials=credentials,
         )
         stmt = stmt.on_conflict_do_update(
             index_elements=["user_id", "provider"],
@@ -44,6 +46,7 @@ class IntegrationRepository(BaseRepository):
                 "api_key": api_key,
                 "external_user_id": external_user_id,
                 "last_error": last_error,
+                "credentials": credentials,
                 "updated_at": func.now(),
             },
         ).returning(IntegrationConnection)

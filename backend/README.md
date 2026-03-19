@@ -4,14 +4,14 @@ Backend principal em Python para integrações, ingestão, persistência, métri
 
 ## Stack
 
-- FastAPI para APIs HTTP tipadas e assíncronas
-- SQLAlchemy 2.0 para ORM e camada de acesso a dados
+- FastAPI para API HTTP
+- Pydantic para validação e contratos
+- SQLAlchemy 2.0 para ORM
 - Alembic para migrations
-- Pydantic Settings para configuração
-- `asyncpg` para acesso assíncrono ao PostgreSQL
-- `psycopg` para migrations e operações síncronas
-- Pandas para agregações e transforms
-- APScheduler como base de jobs/syncs
+- PostgreSQL como banco principal
+- `httpx` para integrações externas
+- logging estruturado com request id
+- worker Python em `app/workers`
 
 ## Estrutura
 
@@ -19,6 +19,7 @@ Backend principal em Python para integrações, ingestão, persistência, métri
 backend/
   app/
     api/
+      routes/
     core/
     db/
     integrations/
@@ -27,7 +28,6 @@ backend/
     repositories/
     schemas/
     services/
-    insights/
     workers/
   migrations/
   tests/
@@ -35,57 +35,69 @@ backend/
 
 ## Subir localmente
 
-1. Crie um ambiente virtual Python 3.11+.
-2. Instale dependências:
-
 ```bash
 pip install -e .[dev]
-```
-
-3. Copie `.env.example` para `.env` e ajuste as credenciais.
-4. Rode as migrations:
-
-```bash
 alembic upgrade head
-```
-
-5. Suba a API:
-
-```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-## Responsabilidades arquiteturais
+## Endpoints principais
 
-### Backend Python
+- `GET /api/health`
+- `GET /api/health/db`
+- `GET /api/settings/profile`
+- `PUT /api/settings/profile`
+- `GET /api/settings/integrations`
+- `PUT /api/settings/integrations/hevy`
+- `POST /api/settings/integrations/hevy/test`
+- `POST /api/settings/integrations/hevy/sync`
+- `PUT /api/settings/integrations/autoexport`
+- `PUT /api/settings/integrations/ai`
+- `GET /api/dashboard/overview`
+- `GET /api/recovery/overview`
+- `GET /api/insights/overview`
+- `GET /api/bjj-sessions`
+- `POST /api/bjj-sessions`
+- `GET /api/bjj-sessions/{id}`
+- `PUT /api/bjj-sessions/{id}`
+- `DELETE /api/bjj-sessions/{id}`
+- `POST /api/webhooks/health/autoexport`
 
-- integrações Hevy e Health Auto Export
-- ingestão de payloads raw e normalizados
-- syncs, idempotência e logs operacionais
-- persistência e enrichments
-- fórmulas, métricas derivadas e rollups diários
-- APIs preparadas para consumo do frontend
+## Domínio suportado
 
-### Frontend Next.js
+- `users`
+- `user_profiles`
+- `integration_connections`
+- `integration_secrets`
+- `sync_runs`
+- `raw_events`
+- `hevy_workouts`, `hevy_workout_exercises`, `hevy_sets`
+- `bjj_sessions`
+- `health_metrics`
+- `nutrition_daily`
+- `weight_entries`
+- `readiness_snapshots`
+- `derived_metrics`
 
-- páginas, dashboards e UX
-- formulários de configuração
-- gráficos e visualização
-- consumo dos payloads prontos do backend
+## Jobs Python
 
-## Endpoints base já criados
+`app/workers/tasks.py` concentra rotinas assíncronas para:
 
-- `GET /api/v1/health`
-- `GET /api/v1/health/db`
-- `GET /api/v1/hevy/status`
-- `POST /api/v1/hevy/connections`
-- `POST /api/v1/hevy/sync/exercise-templates`
-- `POST /api/v1/hevy/sync/workouts`
-- `GET /api/v1/hevy/exercise-templates`
-- `GET /api/v1/hevy/workouts`
-- `POST /api/v1/webhooks/health-auto-export`
-- `GET /api/v1/metrics/daily-rollups`
+- backfill do Hevy
+- sync incremental do Hevy
+- ingestão do Auto Export
+- recálculo de métricas derivadas
 
-## Observação de migração
+## Contrato de erro
 
-O código atual em `src/app/api`, `src/services`, `src/integrations` e `src/lib/metrics` deve ser progressivamente deslocado para este backend. O Next.js deve ficar apenas como camada web.
+Todas as falhas relevantes retornam envelope padronizado:
+
+```json
+{
+  "error": {
+    "code": "INTEGRATION_NOT_CONFIGURED",
+    "message": "Hevy integration is not configured",
+    "details": null
+  }
+}
+```

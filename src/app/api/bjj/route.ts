@@ -1,52 +1,95 @@
 import { NextRequest, NextResponse } from "next/server";
+
 export const dynamic = "force-dynamic";
-import { unstable_noStore as noStore } from "next/cache";
-import { BjjService } from "@/services/bjj/bjj.service";
+
+const backendBaseUrl =
+  process.env.API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "http://localhost:8000";
+
+const buildUrl = (path: string) => `${backendBaseUrl.replace(/\/$/, "")}${path}`;
 
 export async function GET(req: NextRequest) {
-  noStore();
-  try {
-    const userId = req.nextUrl.searchParams.get("userId") || "default-user";
-    const type = req.nextUrl.searchParams.get("type");
-    const bjjService = new BjjService();
+  const userId = req.nextUrl.searchParams.get("userId") || "default-user";
+  const type = req.nextUrl.searchParams.get("type");
 
-    if (type === "stats") {
-      const stats = await bjjService.getSessionStats(userId);
-      return NextResponse.json(stats);
-    }
+  const response = await fetch(buildUrl(`/api/bjj-sessions?userId=${encodeURIComponent(userId)}`), {
+    cache: "no-store",
+  });
+  const payload = await response.json();
 
-    const sessions = await bjjService.getSessions(userId);
-    return NextResponse.json(sessions);
-  } catch (error: any) {
-    return NextResponse.json([]);
+  if (!response.ok) {
+    return NextResponse.json(payload, { status: response.status });
   }
+
+  if (type === "stats") {
+    return NextResponse.json({
+      monthlyMatHours: payload.summary?.monthlyMatHours ?? 0,
+      weeklyLoad: payload.summary?.weeklyLoad ?? 0,
+      recentCount: payload.summary?.totalSessions ?? 0,
+    });
+  }
+
+  return NextResponse.json(
+    (payload.items ?? []).map((session: {
+      id: string;
+      date: string;
+      durationMinutes: number;
+      trainingType: string;
+      srpe: number;
+      sessionLoad: number;
+      notes?: string | null;
+    }) => ({
+      id: session.id,
+      date: session.date,
+      duration: session.durationMinutes,
+      type: session.trainingType,
+      rpe: session.srpe,
+      load: session.sessionLoad,
+      notes: session.notes ?? null,
+    }))
+  );
 }
 
 export async function POST(req: NextRequest) {
-  noStore();
-  try {
-    const body = await req.json();
-    const { userId, ...data } = body;
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const body = await req.json();
+  const payload = {
+    userId: body.userId || "default-user",
+    date: body.date,
+    durationMinutes: body.duration,
+    trainingType:
+      body.type?.toLowerCase?.() === "technical"
+        ? "technical"
+        : body.type?.toLowerCase?.() === "drilling"
+          ? "drill"
+          : body.type?.toLowerCase?.() === "competition"
+            ? "competition"
+            : "sparring",
+    giMode: "gi",
+    srpe: body.rpe,
+    notes: body.notes,
+  };
 
-    const bjjService = new BjjService();
-    const session = await bjjService.createSession(userId, data);
-    return NextResponse.json(session);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const response = await fetch(buildUrl("/api/bjj-sessions"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const json = await response.json();
+  return NextResponse.json(json, { status: response.status });
 }
 
 export async function DELETE(req: NextRequest) {
-  noStore();
-  try {
-    const { id, userId } = await req.json();
-    if (!id || !userId) return NextResponse.json({ error: "id and userId required" }, { status: 400 });
+  const body = await req.json();
+  const response = await fetch(
+    buildUrl(`/api/bjj-sessions/${encodeURIComponent(body.id)}?userId=${encodeURIComponent(body.userId || "default-user")}`),
+    { method: "DELETE" }
+  );
 
-    const bjjService = new BjjService();
-    await bjjService.deleteSession(id, userId);
+  if (response.status === 204) {
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const json = await response.json();
+  return NextResponse.json(json, { status: response.status });
 }

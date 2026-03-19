@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development", alias="APP_ENV")
     app_port: int = Field(default=8000, alias="APP_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    api_v1_prefix: str = Field(default="/api/v1", alias="API_V1_PREFIX")
+    api_v1_prefix: str = Field(default="/api", alias="API_V1_PREFIX")
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"], alias="CORS_ORIGINS")
 
     database_url: str = Field(

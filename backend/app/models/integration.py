@@ -12,6 +12,7 @@ class IntegrationProvider(str, enum.Enum):
     HEVY = "HEVY"
     HEALTH_AUTO_EXPORT = "HEALTH_AUTO_EXPORT"
     NUTRITION_MANUAL = "NUTRITION_MANUAL"
+    AI = "AI"
 
 
 class SyncStatus(str, enum.Enum):
@@ -68,3 +69,16 @@ class RawEvent(StringIdMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class IntegrationSecret(StringIdMixin, TimestampMixin, Base):
+    __tablename__ = "integration_secrets"
+    __table_args__ = (UniqueConstraint("user_id", "provider", "key", name="uq_integration_secrets_user_provider_key"),)
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    provider: Mapped[IntegrationProvider] = mapped_column(Enum(IntegrationProvider), index=True)
+    key: Mapped[str] = mapped_column(String(128))
+    encrypted_value: Mapped[str] = mapped_column(Text)
+    value_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    last4: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)

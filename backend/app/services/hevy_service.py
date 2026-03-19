@@ -1,10 +1,15 @@
+from datetime import datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import IntegrationNotConfiguredError
 from app.integrations.hevy.client import HevyClient
 from app.models.integration import IntegrationProvider, SyncStatus
 from app.repositories.hevy_repository import HevyRepository
 from app.repositories.integration_repository import IntegrationRepository
 from app.schemas.hevy import HevyConnectionCreate, HevyStatusRead, HevySyncResult
+from app.services.metrics_service import MetricsService
+from app.services.secret_service import SecretService
 
 
 class HevyService:
@@ -12,16 +17,18 @@ class HevyService:
         self.session = session
         self.integration_repository = IntegrationRepository(session)
         self.hevy_repository = HevyRepository(session)
+        self.metrics_service = MetricsService(session)
+        self.secret_service = SecretService(session)
 
     async def configure_connection(self, payload: HevyConnectionCreate) -> HevyStatusRead:
         await self.integration_repository.ensure_user(payload.user_id)
         client = HevyClient(payload.api_key)
         is_valid = await client.validate_connection()
+        await self.secret_service.save_secret(payload.user_id, IntegrationProvider.HEVY, "API_KEY", payload.api_key)
         await self.integration_repository.upsert_connection(
             payload.user_id,
             IntegrationProvider.HEVY,
             status="CONNECTED" if is_valid else "ERROR",
-            api_key=payload.api_key,
             external_user_id=payload.external_user_id,
             last_error=None if is_valid else "Invalid Hevy API key",
         )
@@ -31,11 +38,12 @@ class HevyService:
     async def get_status(self, user_id: str) -> HevyStatusRead:
         await self.integration_repository.ensure_user(user_id)
         connection = await self.integration_repository.get_connection(user_id, IntegrationProvider.HEVY)
+        api_key = await self.secret_service.get_secret(user_id, IntegrationProvider.HEVY, "API_KEY")
         workout_count = await self.hevy_repository.count_workouts(user_id)
         exercise_template_count = await self.hevy_repository.count_exercise_templates()
         return HevyStatusRead(
             user_id=user_id,
-            connected=bool(connection and connection.api_key and connection.status == "CONNECTED"),
+            connected=bool(connection and api_key and connection.status == "CONNECTED"),
             status=connection.status if connection else "DISCONNECTED",
             last_synced_at=connection.last_synced_at if connection else None,
             last_error=connection.last_error if connection else None,
@@ -105,6 +113,7 @@ class HevyService:
     async def sync_workouts(self, user_id: str, mode: str = "delta") -> HevySyncResult:
         connection, client, sync_run = await self._prepare_sync(user_id, "WORKOUTS")
         processed = created = updated = 0
+        affected_days = set()
 
         try:
             page = 1
@@ -122,12 +131,20 @@ class HevyService:
                         external_event_id=workout.get("id"),
                     )
                     _, was_created = await self.hevy_repository.upsert_workout(user_id, workout)
+                    if workout.get("start_time"):
+                        affected_days.add(workout["start_time"])
                     processed += 1
                     if was_created:
                         created += 1
                     else:
                         updated += 1
                 page += 1
+
+            for start_time in affected_days:
+                await self.metrics_service.refresh_daily_rollup(
+                    user_id,
+                    datetime.fromisoformat(start_time.replace("Z", "+00:00")),
+                )
 
             await self.integration_repository.finish_sync_run(
                 sync_run,
@@ -172,10 +189,11 @@ class HevyService:
     async def _prepare_sync(self, user_id: str, sync_type: str):
         await self.integration_repository.ensure_user(user_id)
         connection = await self.integration_repository.get_connection(user_id, IntegrationProvider.HEVY)
-        if not connection or not connection.api_key:
-            raise ValueError("Hevy integration is not configured")
+        api_key = await self.secret_service.get_secret(user_id, IntegrationProvider.HEVY, "API_KEY")
+        if not connection or not api_key:
+            raise IntegrationNotConfiguredError("Hevy integration is not configured")
 
-        client = HevyClient(connection.api_key)
+        client = HevyClient(api_key)
         sync_run = await self.integration_repository.create_sync_run(
             user_id=user_id,
             connection_id=connection.id,

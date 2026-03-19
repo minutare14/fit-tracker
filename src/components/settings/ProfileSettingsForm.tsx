@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { resolveAppErrorMessage } from "@/modules/core/api/app-error";
+import { requestJson } from "@/modules/core/api/http-client";
 
 export interface ProfileFormData {
   userId: string;
@@ -77,20 +79,13 @@ export default function ProfileSettingsForm({ userId }: ProfileSettingsFormProps
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`, {
-          cache: "no-store",
+        const data = await requestJson<ProfileFormData>(`/api/settings/profile?userId=${encodeURIComponent(userId)}`, {
           signal: controller.signal,
         });
-
-        if (!res.ok) {
-          throw new Error("Failed to load profile");
-        }
-
-        const data = (await res.json()) as ProfileFormData;
         setForm({ ...defaultProfile, ...data, userId });
       } catch (err: any) {
         if (err.name !== "AbortError") {
-          setError(err.message);
+          setError(resolveAppErrorMessage(err));
         }
       } finally {
         setIsLoading(false);
@@ -109,21 +104,15 @@ export default function ProfileSettingsForm({ userId }: ProfileSettingsFormProps
     setSuccess(null);
 
     try {
-      const res = await fetch("/api/profile", {
+      const payload = await requestJson<{ success: boolean; profile: ProfileFormData }>("/api/settings/profile", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
-      const payload = await res.json();
-      if (!res.ok) {
-        throw new Error(payload.error || "Failed to save profile");
-      }
 
       setForm({ ...defaultProfile, ...payload.profile, userId });
       setSuccess("Perfil salvo com sucesso.");
     } catch (err: any) {
-      setError(err.message);
+      setError(resolveAppErrorMessage(err));
     } finally {
       setIsSaving(false);
     }

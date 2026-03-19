@@ -1,41 +1,62 @@
 ## Fit Tracker
 
-Aplicação Next.js para acompanhamento de treinos, recuperação, nutrição e integrações com Hevy e Health Auto Export.
+Frontend em Next.js/TypeScript com backend principal em Python/FastAPI.
+
+## Stack oficial
+
+- frontend: Next.js + React + TypeScript
+- backend: FastAPI + Pydantic + SQLAlchemy + Alembic
+- banco: PostgreSQL
+- jobs/syncs: worker Python em `backend/app/workers`
+
+As regras de negócio, integrações, webhooks, syncs, persistência e métricas analíticas ficam no backend Python. O frontend consome a API em `/api/...` usando `NEXT_PUBLIC_API_BASE_URL`.
 
 ## Desenvolvimento
 
-Suba o app local:
+Frontend:
 
 ```bash
 npx prisma generate
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000).
-
-## Banco e migrations
-
-O projeto usa Prisma com migrations em [prisma/migrations](/Users/emano/OneDrive/Documentos/Downloads/fit-tracker/prisma/migrations).
+Backend:
 
 ```bash
-npx prisma migrate deploy
-npx prisma generate
+cd backend
+pip install -e .[dev]
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
 ```
+
+Abra o frontend em [http://localhost:3000](http://localhost:3000).
 
 ## Variáveis importantes
 
-- `DATABASE_URL`: conexão do Prisma
-- `APP_SECRET`: chave usada para criptografar segredos de integrações no backend
-- `HEVY_API_KEY`: fallback opcional para sync do Hevy
-- `NEXT_PUBLIC_API_URL`: base pública da aplicação
-- `APP_HOST_PORT` / `APP_INTERNAL_PORT`: portas do deploy
+- `NEXT_PUBLIC_API_BASE_URL`: base pública da API FastAPI, por exemplo `http://localhost:8000`
+- `DATABASE_URL`: conexão assíncrona do backend Python
+- `DATABASE_URL_SYNC`: conexão síncrona usada por Alembic
+- `HEVY_API_KEY`: fallback opcional apenas para desenvolvimento
+- `HEALTH_AUTO_EXPORT_SECRET`: fallback opcional para webhook
 
-## Fluxos reais já ligados
+## Fluxos principais ligados ao backend Python
 
-- perfil editável via `/api/profile`
-- segredo do Hevy salvo no backend e mascarado no frontend
-- webhook Health Auto Export em `/api/webhooks/health/autoexport`
-- dashboard/settings/health com loading, empty, error e success state
+- `GET/PUT /api/settings/profile`
+- `GET /api/settings/integrations`
+- `PUT /api/settings/integrations/hevy`
+- `POST /api/settings/integrations/hevy/test`
+- `POST /api/settings/integrations/hevy/sync`
+- `PUT /api/settings/integrations/autoexport`
+- `PUT /api/settings/integrations/ai`
+- `GET/POST/PUT/DELETE /api/bjj-sessions`
+- `GET /api/dashboard/overview`
+- `GET /api/recovery/overview`
+- `GET /api/insights/overview`
+- `POST /api/webhooks/health/autoexport`
+
+## Nota sobre rotas Next legadas
+
+Ainda existem rotas Next antigas fora do fluxo principal. Elas não são mais a fonte oficial de backend e devem ser tratadas como compatibilidade temporária enquanto a migração total para FastAPI é concluída.
 
 ## Deploy sem colisão de porta
 
