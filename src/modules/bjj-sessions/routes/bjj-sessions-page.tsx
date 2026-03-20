@@ -36,6 +36,7 @@ const toFormValues = (session?: BjjSessionViewModel | null): RawBjjSessionFormVa
     giMode: session.giMode,
     srpe: String(session.srpe),
     rounds: session.rounds ? String(session.rounds) : "",
+    roundDurationMinutes: session.roundDurationMinutes ? String(session.roundDurationMinutes) : "",
     sparringMinutes: session.sparringMinutes ? String(session.sparringMinutes) : "",
     drillMinutes: session.drillMinutes ? String(session.drillMinutes) : "",
     techniqueMinutes: session.techniqueMinutes ? String(session.techniqueMinutes) : "",
