@@ -19,7 +19,17 @@ const isApiSuccess = <T>(value: unknown): value is ApiSuccess<T> => {
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
 
 const resolveInput = (input: RequestInfo | URL): RequestInfo | URL => {
-  if (!apiBaseUrl || typeof input !== "string" || !input.startsWith("/")) {
+  if (typeof input !== "string" || !input.startsWith("/")) {
+    return input;
+  }
+
+  // In the browser, prefer the app's same-origin /api proxy so the UI does not
+  // depend on CORS or on the public API host being embedded into the client bundle.
+  if (typeof window !== "undefined") {
+    return input;
+  }
+
+  if (!apiBaseUrl) {
     return input;
   }
 

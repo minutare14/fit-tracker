@@ -1,7 +1,7 @@
 import base64
 import json
 from functools import lru_cache
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,8 +28,8 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/fit_tracker",
         alias="DATABASE_URL",
     )
-    database_url_sync: str = Field(
-        default="postgresql+psycopg://postgres:postgres@localhost:5432/fit_tracker",
+    database_url_sync: str | None = Field(
+        default=None,
         alias="DATABASE_URL_SYNC",
     )
 
@@ -51,18 +51,25 @@ class Settings(BaseSettings):
 
     @field_validator("database_url", "database_url_sync", mode="before")
     @classmethod
-    def normalize_database_url(cls, value: str) -> str:
+    def normalize_database_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
         if not isinstance(value, str):
             return value
 
-        if value.startswith("prisma+postgres://"):
-            sync_url = cls._extract_postgres_url_from_prisma(value)
-            return sync_url
+        normalized_value = value.strip('"')
+        if not normalized_value:
+            return None
 
-        return value.strip('"')
+        if normalized_value.startswith("prisma+postgres://"):
+            normalized_value = cls._extract_postgres_url_from_prisma(normalized_value)
+
+        return cls._strip_unsupported_postgres_query_params(normalized_value)
 
     @model_validator(mode="after")
     def align_driver_urls(self):
+        if not self.database_url_sync:
+            self.database_url_sync = self.database_url
         if self.database_url.startswith("postgres://"):
             self.database_url = self.database_url.replace("postgres://", "postgresql+asyncpg://", 1)
         if self.database_url.startswith("postgresql://"):
@@ -89,6 +96,19 @@ class Settings(BaseSettings):
         padding = "=" * (-len(token_part) % 4)
         decoded = base64.urlsafe_b64decode(f"{token_part}{padding}")
         return json.loads(decoded.decode("utf-8"))
+
+    @staticmethod
+    def _strip_unsupported_postgres_query_params(database_url: str) -> str:
+        parsed = urlparse(database_url)
+        if not parsed.scheme.startswith("postgres"):
+            return database_url
+
+        filtered_query = [
+            (key, value)
+            for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+            if key.lower() != "schema"
+        ]
+        return urlunparse(parsed._replace(query=urlencode(filtered_query)))
 
 
 @lru_cache
