@@ -11,7 +11,7 @@ services:
     ports:
       - "${APP_HOST_PORT:?APP_HOST_PORT must be set}:${APP_INTERNAL_PORT:-3000}"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fittracker}?schema=public}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fit_tracker}?schema=public}
       HEVY_API_KEY: ${HEVY_API_KEY:-}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
       API_PROXY_TARGET: ${API_PROXY_TARGET:-http://backend:8000}
@@ -41,8 +41,8 @@ services:
     expose:
       - "8000"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fittracker}?schema=public}
-      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fittracker}?schema=public}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fit_tracker}?schema=public}
+      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fit_tracker}?schema=public}
       API_V1_PREFIX: ${API_V1_PREFIX:-/api}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,https://fit.minutarecore.space,https://api.fit.minutarecore.space}
     depends_on:
@@ -67,11 +67,11 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fittracker}
-      POSTGRES_DB: ${POSTGRES_DB:-fittracker}
+      POSTGRES_DB: ${POSTGRES_DB:-fit_tracker}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "PGPASSWORD=${POSTGRES_PASSWORD:-fittracker} psql -h 127.0.0.1 -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fittracker} -c 'SELECT 1' >/dev/null"]
+      test: ["CMD-SHELL", "PGPASSWORD=${POSTGRES_PASSWORD:-fittracker} psql -h 127.0.0.1 -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fit_tracker} -c 'SELECT 1' >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 10
