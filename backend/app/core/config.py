@@ -1,10 +1,11 @@
 import base64
 import json
 from functools import lru_cache
+from typing import Annotated
 from urllib.parse import parse_qs, parse_qsl, urlencode, urlparse, urlunparse
 
 from pydantic import Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -15,7 +16,7 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, alias="APP_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     api_v1_prefix: str = Field(default="/api", alias="API_V1_PREFIX")
-    cors_origins: list[str] = Field(
+    cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [
             "http://localhost:3000",
             "https://fit.minutarecore.space",
@@ -46,6 +47,11 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins(cls, value):
         if isinstance(value, str):
+            normalized_value = value.strip()
+            if normalized_value.startswith("["):
+                parsed_value = json.loads(normalized_value)
+                if isinstance(parsed_value, list):
+                    return [str(origin).strip() for origin in parsed_value if str(origin).strip()]
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
