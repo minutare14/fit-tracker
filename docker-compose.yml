@@ -34,8 +34,8 @@ services:
       dockerfile: Dockerfile
     container_name: fit-tracker-backend
     restart: unless-stopped
-    ports:
-      - "${BACKEND_HOST_PORT:-8000}:8000"
+    expose:
+      - "8000"
     environment:
       DATABASE_URL: ${DATABASE_URL:-}
     depends_on:
