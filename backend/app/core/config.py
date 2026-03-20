@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/fit_tracker",
+        default="postgresql+asyncpg://postgres:fittracker@localhost:5432/fittracker",
         alias="DATABASE_URL",
     )
     database_url_sync: str | None = Field(

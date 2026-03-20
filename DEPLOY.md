@@ -24,8 +24,8 @@ Recommended runtime values for the current VPS:
 APP_HOST_PORT=3020
 APP_INTERNAL_PORT=3000
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=fit_tracker
+POSTGRES_PASSWORD=fittracker
+POSTGRES_DB=fittracker
 DATABASE_URL=
 DATABASE_URL_SYNC=
 NEXT_PUBLIC_API_BASE_URL=https://api.fit.minutarecore.space
@@ -37,7 +37,7 @@ CORS_ORIGINS=https://fit.minutarecore.space,https://api.fit.minutarecore.space
 ## Important: Persistent Postgres Passwords
 
 - If `postgres_data` already exists, changing `POSTGRES_PASSWORD` later does not rotate the password stored inside the database cluster.
-- The backend healthcheck uses `/api/health/db`, so any mismatch between the persisted database password and the password embedded in `DATABASE_URL` will keep `fit-tracker-backend` `unhealthy`.
+- The backend healthcheck temporarily uses `/api/health` during a clean rebuild so the app only depends on the API process becoming reachable while migrations settle.
 - To avoid drift, the compose file now derives backend DB URLs from `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` when `DATABASE_URL` is left empty.
 - The Postgres service now builds a small wrapper image that starts the official `postgres:16-alpine` entrypoint and synchronizes the application user's password with the current `POSTGRES_PASSWORD` on startup, including when the volume already exists.
 - Leave `DATABASE_URL` and `DATABASE_URL_SYNC` empty in Dokploy unless you intentionally need an explicit override.
