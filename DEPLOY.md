@@ -68,6 +68,7 @@ You can also use the included helper:
 - Only the app container binds to the host.
 - Postgres stays internal to the compose network and is not published on the VPS.
 - The DB healthcheck now validates authenticated access with the configured password, so `backend` only starts after the credential that `/api/health/db` needs is actually usable.
+- The backend container now runs `alembic upgrade head` before starting `uvicorn`, so a fresh or reset database gets its schema before the API begins serving requests.
 - The app and backend also join `dokploy-network`.
 - The frontend now proxies same-origin `/api/*` requests to `API_PROXY_TARGET`, which removes the previous 404s from `https://fit.minutarecore.space/api/*`.
 - Dokploy still needs two domain mappings in the panel:
