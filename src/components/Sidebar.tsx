@@ -19,8 +19,8 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full bg-background-light dark:bg-background-dark z-20">
-      <div className="p-6 flex items-center gap-3">
-        <div className="size-10 bg-primary rounded flex items-center justify-center text-background-dark">
+      <div className="px-6 pt-10 pb-6 flex items-center gap-3">
+        <div className="size-10 bg-primary rounded flex shrink-0 items-center justify-center text-background-dark">
           <span className="material-symbols-outlined font-bold">exercise</span>
         </div>
         <div>

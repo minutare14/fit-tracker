@@ -5,6 +5,26 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.models.common import StringIdMixin, TimestampMixin
+from sqlalchemy.orm import relationship
+
+
+class BjjTechnique(StringIdMixin, TimestampMixin, Base):
+    __tablename__ = "bjj_techniques"
+
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    category: Mapped[str] = mapped_column(String(64))
+    position: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    gi_mode: Mapped[str] = mapped_column(String(16), default="both")
+    created_by_user: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    active: Mapped[bool] = mapped_column(default=True)
+
+
+class BjjSessionTechnique(Base):
+    __tablename__ = "bjj_session_techniques"
+
+    session_id: Mapped[str] = mapped_column(ForeignKey("bjj_sessions.id", ondelete="CASCADE"), primary_key=True)
+    technique_id: Mapped[str] = mapped_column(ForeignKey("bjj_techniques.id", ondelete="CASCADE"), primary_key=True)
+    type: Mapped[str] = mapped_column(String(32), primary_key=True)  # trained, successful, suffered
 
 
 class BjjSession(StringIdMixin, TimestampMixin, Base):
@@ -21,6 +41,7 @@ class BjjSession(StringIdMixin, TimestampMixin, Base):
     srpe: Mapped[int] = mapped_column(Integer)
     session_load: Mapped[int] = mapped_column(Integer, index=True)
     rounds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    round_duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sparring_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     drill_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     technique_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)

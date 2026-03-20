@@ -74,7 +74,11 @@ class BjjSessionsService:
             srpe=payload.srpe,
             session_load=calculate_session_load(payload.duration_minutes, payload.srpe),
             rounds=payload.rounds,
-            sparring_minutes=payload.sparring_minutes,
+            round_duration_minutes=payload.round_duration_minutes,
+            sparring_minutes=payload.sparring_minutes or (
+                (payload.rounds * payload.round_duration_minutes)
+                if payload.rounds and payload.round_duration_minutes else None
+            ),
             drill_minutes=payload.drill_minutes,
             technique_minutes=payload.technique_minutes,
             trained_positions=payload.trained_positions,
@@ -112,7 +116,13 @@ class BjjSessionsService:
             row.srpe = payload.srpe
         row.session_load = calculate_session_load(row.duration_minutes, row.srpe)
         row.rounds = payload.rounds if payload.rounds is not None else row.rounds
-        row.sparring_minutes = payload.sparring_minutes if payload.sparring_minutes is not None else row.sparring_minutes
+        row.round_duration_minutes = payload.round_duration_minutes if payload.round_duration_minutes is not None else row.round_duration_minutes
+        
+        if payload.sparring_minutes is not None:
+            row.sparring_minutes = payload.sparring_minutes
+        elif row.rounds and row.round_duration_minutes:
+            row.sparring_minutes = row.rounds * row.round_duration_minutes
+            
         row.drill_minutes = payload.drill_minutes if payload.drill_minutes is not None else row.drill_minutes
         row.technique_minutes = payload.technique_minutes if payload.technique_minutes is not None else row.technique_minutes
         row.trained_positions = payload.trained_positions if payload.trained_positions is not None else row.trained_positions
@@ -156,6 +166,7 @@ class BjjSessionsService:
             gi_mode=row.gi_mode,
             srpe=row.srpe,
             rounds=row.rounds,
+            round_duration_minutes=row.round_duration_minutes,
             sparring_minutes=row.sparring_minutes,
             drill_minutes=row.drill_minutes,
             technique_minutes=row.technique_minutes,

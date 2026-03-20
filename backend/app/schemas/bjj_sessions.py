@@ -20,6 +20,7 @@ class BjjSessionBase(APIModel):
     gi_mode: GiMode = "gi"
     srpe: int = Field(..., ge=1, le=10)
     rounds: int | None = None
+    round_duration_minutes: int | None = None
     sparring_minutes: int | None = None
     drill_minutes: int | None = None
     technique_minutes: int | None = None
@@ -48,6 +49,7 @@ class BjjSessionUpdate(APIModel):
     gi_mode: GiMode | None = None
     srpe: int | None = Field(default=None, ge=1, le=10)
     rounds: int | None = None
+    round_duration_minutes: int | None = None
     sparring_minutes: int | None = None
     drill_minutes: int | None = None
     technique_minutes: int | None = None
@@ -79,3 +81,20 @@ class BjjSessionsSummary(APIModel):
 class BjjSessionsOverview(APIModel):
     items: list[BjjSessionRead]
     summary: BjjSessionsSummary
+
+
+class BjjTechniqueBase(APIModel):
+    name: str = Field(..., max_length=255)
+    category: str = Field(..., max_length=64)
+    position: str | None = Field(default=None, max_length=64)
+    gi_mode: GiMode | Literal["both"] = "both"
+
+
+class BjjTechniqueCreate(BjjTechniqueBase):
+    pass
+
+
+class BjjTechniqueRead(BjjTechniqueBase):
+    id: str
+    active: bool
+    created_at: datetime

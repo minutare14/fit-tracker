@@ -11,6 +11,7 @@ export interface CreateBjjSessionInput {
   giMode: BjjGiMode;
   srpe: number;
   rounds?: number | null;
+  roundDurationMinutes?: number | null;
   sparringMinutes?: number | null;
   drillMinutes?: number | null;
   techniqueMinutes?: number | null;

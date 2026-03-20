@@ -98,7 +98,7 @@ class RecoveryService:
                     unit=latest_by_type["HRV"].unit if "HRV" in latest_by_type else "ms",
                     helper="Variabilidade cardiaca mais recente.",
                 ),
-                "resting_hr": RecoveryMetricWidgetRead(
+                "restingHr": RecoveryMetricWidgetRead(
                     label="RHR",
                     value=latest_by_type["RHR"].value if "RHR" in latest_by_type else None,
                     unit=latest_by_type["RHR"].unit if "RHR" in latest_by_type else "bpm",

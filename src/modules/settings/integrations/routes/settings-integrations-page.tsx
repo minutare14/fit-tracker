@@ -167,9 +167,16 @@ export function SettingsIntegrationsPage() {
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-slate-300">
                     Status: <strong>{resource.data.hevy.status}</strong>
                     <br />
+                    Ultima sync: {resource.data.hevy.lastSyncAt ? new Date(resource.data.hevy.lastSyncAt).toLocaleString("pt-BR") : "Nenhuma"}
+                    <br />
                     API key salva: {resource.data.hevy.maskedApiKey ?? "nenhuma"}
                     <br />
                     Workouts importados: {resource.data.hevy.workoutsImported}
+                    {resource.data.hevy.lastError && (
+                      <div className="mt-2 border-t border-red-500/20 pt-2 text-red-500">
+                        Erro recente: {resource.data.hevy.lastError}
+                      </div>
+                    )}
                   </div>
                   <input
                     className={inputClassName}

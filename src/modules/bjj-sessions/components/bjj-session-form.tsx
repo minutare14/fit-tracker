@@ -4,6 +4,7 @@ import {
   RawBjjSessionFormValues,
   parseBjjSessionForm,
 } from "@/modules/bjj-sessions/schemas/bjj-session-form.schema";
+import { TechniqueMultiSelect } from "@/modules/bjj-sessions/components/technique-multi-select";
 
 interface BjjSessionFormProps {
   title: string;
@@ -102,17 +103,29 @@ export function BjjSessionForm({
         <h3 className={sectionTitleClassName}>Carga</h3>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <label className="space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">sRPE</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              sRPE <span className="font-normal normal-case tracking-normal text-slate-400 ml-1">(1 Leve - 10 Exaustivo)</span>
+            </span>
             <input className={inputClassName} type="number" min="1" max="10" value={values.srpe} onChange={(event) => onChange("srpe", event.target.value)} />
           </label>
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Rounds</span>
-            <input className={inputClassName} type="number" value={values.rounds} onChange={(event) => onChange("rounds", event.target.value)} />
+            <input className={inputClassName} type="number" min="1" value={values.rounds} onChange={(event) => onChange("rounds", event.target.value)} />
           </label>
           <label className="space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Sparring (min)</span>
-            <input className={inputClassName} type="number" value={values.sparringMinutes} onChange={(event) => onChange("sparringMinutes", event.target.value)} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Tempo/Round (min)</span>
+            <input className={inputClassName} type="number" min="1" value={values.roundDurationMinutes} onChange={(event) => onChange("roundDurationMinutes", event.target.value)} />
           </label>
+          <div className="space-y-2">
+            <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Sparring (Total)</span>
+            <div className={`flex h-[46px] items-center px-4 rounded-2xl border ${values.rounds && values.roundDurationMinutes ? "border-primary/20 bg-primary/5 text-primary" : "border-slate-200 bg-slate-50 text-slate-500 dark:border-zinc-800 dark:bg-zinc-900"}`}>
+              {values.rounds && values.roundDurationMinutes ? (
+                <span className="font-bold">{Number(values.rounds) * Number(values.roundDurationMinutes)} min</span>
+              ) : (
+                <span className="opacity-50">--</span>
+              )}
+            </div>
+          </div>
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Drill (min)</span>
             <input className={inputClassName} type="number" value={values.drillMinutes} onChange={(event) => onChange("drillMinutes", event.target.value)} />
@@ -136,15 +149,15 @@ export function BjjSessionForm({
           </label>
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Tecnicas treinadas</span>
-            <textarea className={`${inputClassName} min-h-28`} value={values.trainedTechniques} onChange={(event) => onChange("trainedTechniques", event.target.value)} placeholder="Armlock, single leg, guarda..." />
+            <TechniqueMultiSelect value={values.trainedTechniques} onChange={(val) => onChange("trainedTechniques", val)} placeholder="Armlock, single leg..." />
           </label>
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Funcionaram</span>
-            <textarea className={`${inputClassName} min-h-28`} value={values.successfulTechniques} onChange={(event) => onChange("successfulTechniques", event.target.value)} />
+            <TechniqueMultiSelect value={values.successfulTechniques} onChange={(val) => onChange("successfulTechniques", val)} placeholder="Tecnicas que deram certo" />
           </label>
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Sofridas</span>
-            <textarea className={`${inputClassName} min-h-28`} value={values.sufferedTechniques} onChange={(event) => onChange("sufferedTechniques", event.target.value)} />
+            <TechniqueMultiSelect value={values.sufferedTechniques} onChange={(val) => onChange("sufferedTechniques", val)} placeholder="Tecnicas sofridas" />
           </label>
         </div>
       </section>
@@ -153,7 +166,9 @@ export function BjjSessionForm({
         <h3 className={sectionTitleClassName}>Estado fisico</h3>
         <div className="grid gap-4 md:grid-cols-3">
           <label className="space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Fadiga pre</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Fadiga pre <span className="font-normal normal-case tracking-normal text-slate-400 ml-1">(1 Descansado - 10 Morto)</span>
+            </span>
             <input className={inputClassName} type="number" min="1" max="10" value={values.fatigueBefore} onChange={(event) => onChange("fatigueBefore", event.target.value)} />
           </label>
           <label className="space-y-2">

@@ -20,6 +20,7 @@ export interface RawBjjSessionFormValues {
   giMode: BjjGiMode;
   srpe: string;
   rounds: string;
+  roundDurationMinutes: string;
   sparringMinutes: string;
   drillMinutes: string;
   techniqueMinutes: string;
@@ -44,6 +45,7 @@ export function getDefaultBjjSessionFormValues(): RawBjjSessionFormValues {
     giMode: "gi",
     srpe: "7",
     rounds: "",
+    roundDurationMinutes: "",
     sparringMinutes: "",
     drillMinutes: "",
     techniqueMinutes: "",
@@ -100,6 +102,7 @@ export function parseBjjSessionForm(values: RawBjjSessionFormValues): {
       giMode: values.giMode,
       srpe,
       rounds: parseOptionalNumber(values.rounds),
+      roundDurationMinutes: parseOptionalNumber(values.roundDurationMinutes),
       sparringMinutes: parseOptionalNumber(values.sparringMinutes),
       drillMinutes: parseOptionalNumber(values.drillMinutes),
       techniqueMinutes: parseOptionalNumber(values.techniqueMinutes),
