@@ -43,9 +43,17 @@ export async function requestJson<T>(input: RequestInfo | URL, init?: RequestIni
 
   const contentType = response.headers.get("content-type");
   if (contentType && !contentType.includes("application/json")) {
-    const textPreview = await response.text().catch(() => "Sem corpo");
-    console.error(`[http-client] Expected JSON but received Content-Type: ${contentType}. URL: ${response.url}. Preview: ${textPreview.substring(0, 150)}`);
-    throw new Error("O servidor retornou um formato invalido (nao-JSON). A rota pode estar retornando HTML ou a base API esta incorreta.");
+    console.error(`[http-client] Expected JSON but received Content-Type: ${contentType}. URL: ${response.url}`);
+    
+    // Attempt to read as text to discover what the HTML actually is (nginx 404, Next error, etc)
+    const textBody = await response.text().catch(() => "");
+    const excerpt = textBody.substring(0, 100).replace(/\n/g, " ");
+
+    throw new Error(
+      `Conexao invalida. O frontend tentou acessar o backend em [${response.url}], mas recebeu HTML em vez de JSON. ` +
+      `Sua variavel NEXT_PUBLIC_API_BASE_URL provavelmente esta apontando para o lugar errado em producao. ` + 
+      `(Recebeu: ${contentType}. Resposta: ${excerpt}...)`
+    );
   }
 
   const payload = await response.json().catch((err: Error) => {
