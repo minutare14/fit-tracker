@@ -11,7 +11,7 @@ services:
     ports:
       - "${APP_HOST_PORT:?APP_HOST_PORT must be set}:${APP_INTERNAL_PORT:-3000}"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-fit_tracker}?schema=public}
       HEVY_API_KEY: ${HEVY_API_KEY:-}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
       API_PROXY_TARGET: ${API_PROXY_TARGET:-http://backend:8000}
@@ -41,8 +41,8 @@ services:
     expose:
       - "8000"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-}
-      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-fit_tracker}?schema=public}
+      DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-fit_tracker}?schema=public}
       API_V1_PREFIX: ${API_V1_PREFIX:-/api}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,https://fit.minutarecore.space,https://api.fit.minutarecore.space}
     depends_on:
@@ -59,7 +59,9 @@ services:
       - dokploy-network
 
   db:
-    image: postgres:16-alpine
+    build:
+      context: ./docker/postgres
+      dockerfile: Dockerfile
     container_name: fit-tracker-db
     restart: unless-stopped
     environment:
@@ -69,10 +71,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fit_tracker}"]
+      test: ["CMD-SHELL", "PGPASSWORD=${POSTGRES_PASSWORD:-postgres} psql -h 127.0.0.1 -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fit_tracker} -c 'SELECT 1' >/dev/null"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     networks:
       - default
 
