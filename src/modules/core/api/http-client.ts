@@ -43,8 +43,9 @@ export async function requestJson<T>(input: RequestInfo | URL, init?: RequestIni
 
   const contentType = response.headers.get("content-type");
   if (contentType && !contentType.includes("application/json")) {
-    console.error(`[http-client] Expected JSON but received Content-Type: ${contentType}. URL: ${response.url}`);
-    throw new Error("O servidor retornou um formato invalido (nao-JSON). Verifique a conexao ou rota.");
+    const textPreview = await response.text().catch(() => "Sem corpo");
+    console.error(`[http-client] Expected JSON but received Content-Type: ${contentType}. URL: ${response.url}. Preview: ${textPreview.substring(0, 150)}`);
+    throw new Error("O servidor retornou um formato invalido (nao-JSON). A rota pode estar retornando HTML ou a base API esta incorreta.");
   }
 
   const payload = await response.json().catch((err: Error) => {
