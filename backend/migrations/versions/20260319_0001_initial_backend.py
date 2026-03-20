@@ -7,6 +7,7 @@ Create Date: 2026-03-19 11:00:00
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 revision = "20260319_0001"
@@ -15,13 +16,20 @@ branch_labels = None
 depends_on = None
 
 
-integrationprovider = sa.Enum(
+integrationprovider = postgresql.ENUM(
     "HEVY",
     "HEALTH_AUTO_EXPORT",
     "NUTRITION_MANUAL",
     name="integrationprovider",
+    create_type=False,
 )
-syncstatus = sa.Enum("SUCCESS", "FAILURE", "IN_PROGRESS", name="syncstatus")
+syncstatus = postgresql.ENUM(
+    "SUCCESS",
+    "FAILURE",
+    "IN_PROGRESS",
+    name="syncstatus",
+    create_type=False,
+)
 
 
 def upgrade() -> None:

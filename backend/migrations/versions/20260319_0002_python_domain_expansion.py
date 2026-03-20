@@ -7,6 +7,7 @@ Create Date: 2026-03-19 15:30:00
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 revision = "20260319_0002"
@@ -15,7 +16,7 @@ branch_labels = None
 depends_on = None
 
 
-integrationprovider = sa.Enum(
+integrationprovider = postgresql.ENUM(
     "HEVY",
     "HEALTH_AUTO_EXPORT",
     "NUTRITION_MANUAL",
