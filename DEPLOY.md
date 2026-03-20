@@ -6,6 +6,8 @@ Set these variables in Dokploy before deploying:
 
 - `APP_HOST_PORT`: required host port for the Next.js container
 - `APP_INTERNAL_PORT`: container port, usually `3000`
+- `APP_DOMAIN`: public hostname for the frontend, usually `fit.minutarecore.space`
+- `API_DOMAIN`: public hostname for the backend, usually `api.fit.minutarecore.space`
 - `DATABASE_URL`: optional explicit database URL shared by Prisma and FastAPI
 - `DATABASE_URL_SYNC`: optional sync SQLAlchemy URL for the FastAPI backend; when omitted it is derived from `DATABASE_URL`
 - `APP_SECRET`: encryption key for integration secrets stored in the backend
@@ -23,6 +25,8 @@ Recommended runtime values for the current VPS:
 ```env
 APP_HOST_PORT=3020
 APP_INTERNAL_PORT=3000
+APP_DOMAIN=fit.minutarecore.space
+API_DOMAIN=api.fit.minutarecore.space
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=fittracker
 POSTGRES_DB=fit_tracker
@@ -70,6 +74,7 @@ You can also use the included helper:
 - The DB healthcheck now validates authenticated access with the configured password, so `backend` only starts after the credential that `/api/health/db` needs is actually usable.
 - The backend container now runs `alembic upgrade head` before starting `uvicorn`, so a fresh or reset database gets its schema before the API begins serving requests.
 - The app and backend also join `dokploy-network`.
+- The compose file now declares the Traefik routers/services directly, so a clean `docker compose up -d --build` still restores both public hostnames instead of depending on out-of-band Dokploy labels.
 - The frontend now proxies same-origin `/api/*` requests to `API_PROXY_TARGET`, which removes the previous 404s from `https://fit.minutarecore.space/api/*`.
 - Dokploy still needs two domain mappings in the panel:
   - `fit.minutarecore.space` -> service `app` on port `3000`

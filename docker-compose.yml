@@ -31,6 +31,18 @@ services:
     networks:
       - default
       - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-web.rule=Host(`${APP_DOMAIN:-fit.minutarecore.space}`)
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-web.entrypoints=web
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-web.service=${APP_NAME:-fit-tracker}-app
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-websecure.rule=Host(`${APP_DOMAIN:-fit.minutarecore.space}`)
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-websecure.entrypoints=websecure
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-app-websecure.service=${APP_NAME:-fit-tracker}-app
+      - traefik.http.services.${APP_NAME:-fit-tracker}-app.loadbalancer.server.port=${APP_INTERNAL_PORT:-3000}
 
   backend:
     build:
@@ -57,6 +69,18 @@ services:
     networks:
       - default
       - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-web.rule=Host(`${API_DOMAIN:-api.fit.minutarecore.space}`)
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-web.entrypoints=web
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-web.middlewares=redirect-to-https@file
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-web.service=${APP_NAME:-fit-tracker}-api
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-websecure.rule=Host(`${API_DOMAIN:-api.fit.minutarecore.space}`)
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-websecure.entrypoints=websecure
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-websecure.tls.certresolver=letsencrypt
+      - traefik.http.routers.${APP_NAME:-fit-tracker}-api-websecure.service=${APP_NAME:-fit-tracker}-api
+      - traefik.http.services.${APP_NAME:-fit-tracker}-api.loadbalancer.server.port=8000
 
   db:
     build:
