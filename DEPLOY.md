@@ -8,7 +8,7 @@ O deploy usa tres servicos:
 - `backend`: FastAPI como unica API
 - `db`: PostgreSQL
 
-Nao ha rewrite interno do Next, nem rotas API concorrentes, nem Prisma no caminho oficial.
+Nao ha Prisma nem logica de dominio concorrente no Next. O `app` expõe apenas um BFF fino em `/bff` para encaminhar chamadas ao FastAPI no mesmo dominio da interface.
 
 ## Dokploy
 
@@ -19,14 +19,14 @@ Configure os domains/ports no painel do Dokploy assim:
 - `app` na porta interna `3000`
 - `backend` na porta interna `8000` se voce quiser expor a API publicamente
 
-Para o frontend funcionar no browser, defina `NEXT_PUBLIC_API_BASE_URL` com a URL publica real do backend, por exemplo `https://api.seudominio.com`. O SSR continua usando `APP_API_BASE_URL_SERVER=http://backend:8000`.
+Para o frontend funcionar no browser, basta expor o `app`. O browser vai usar o BFF same-origin em `/bff`, e o SSR continua usando `APP_API_BASE_URL_SERVER=http://backend:8000`. Expor o `backend` publicamente passa a ser opcional para webhook direto, health externo ou acesso administrativo.
 
 ## Variaveis
 
 Defina estas variaveis no ambiente de deploy:
 
 - `APP_INTERNAL_PORT`: porta interna do frontend, normalmente `3000`
-- `NEXT_PUBLIC_API_BASE_URL`: URL publica da API, por exemplo `http://127.0.0.1:8000` em ambiente local ou a URL publica do backend em producao
+- `NEXT_PUBLIC_API_BASE_URL`: opcional; fallback de compatibilidade para desenvolvimento/debug fora do BFF
 - `APP_API_BASE_URL_SERVER`: URL interna usada pelo SSR do Next, normalmente `http://backend:8000`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
@@ -49,10 +49,10 @@ Use os scripts incluidos no repositorio:
 ./scripts/deploy/up.sh
 ```
 
-O primeiro script escreve `.deploy.env` com as portas selecionadas e com a URL publica da API Python. O segundo sobe a stack com `docker compose` usando `.env` e `.deploy.env`.
+O primeiro script escreve `.deploy.env` com as portas locais selecionadas. O segundo sobe a stack com `docker compose` usando `.env` e `.deploy.env`.
 
 ## Observacoes
 
 - O backend expoe `GET /api/health` como health principal.
-- O frontend faz chamadas diretas para a API Python usando `NEXT_PUBLIC_API_BASE_URL` no browser e `APP_API_BASE_URL_SERVER` no SSR.
-- Se voce hospedar `app` e `backend` em dominios separados, configure o `NEXT_PUBLIC_API_BASE_URL` para o dominio publico do backend e ajuste `CORS_ORIGINS` para o dominio do frontend.
+- O browser fala com o `app` no mesmo dominio via `/bff`, e o `app` encaminha as chamadas para a API Python usando `APP_API_BASE_URL_SERVER`.
+- Se voce hospedar `backend` em dominio separado para webhook ou acesso externo, ajuste `CORS_ORIGINS` conforme esse dominio e o dominio do frontend.

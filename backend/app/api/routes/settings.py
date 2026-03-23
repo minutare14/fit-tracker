@@ -45,7 +45,7 @@ async def get_integrations(
     user_id: str = Query(default="default-user", alias="userId"),
     session: AsyncSession = Depends(get_db_session),
 ) -> SettingsIntegrationsRead:
-    origin = str(request.base_url).rstrip("/")
+    origin = request.headers.get("x-public-origin") or str(request.base_url).rstrip("/")
     return await SettingsService(session).get_integrations(user_id, origin)
 
 
@@ -83,7 +83,7 @@ async def save_autoexport_settings(
     payload: AutoExportSettingsWrite,
     session: AsyncSession = Depends(get_db_session),
 ):
-    origin = str(request.base_url).rstrip("/")
+    origin = request.headers.get("x-public-origin") or str(request.base_url).rstrip("/")
     return await SettingsService(session).save_autoexport_settings(payload, origin)
 
 

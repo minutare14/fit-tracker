@@ -8,7 +8,7 @@ Aplicacao com frontend em Next.js e backend principal em Python/FastAPI.
 - `backend`: FastAPI + Pydantic + SQLAlchemy + Alembic
 - `db`: PostgreSQL
 
-O frontend consome a API Python diretamente via `NEXT_PUBLIC_API_BASE_URL`, e o SSR usa `APP_API_BASE_URL_SERVER` dentro do container. Nao ha proxy interno do Next nem Prisma como fonte de verdade.
+O frontend usa um BFF fino e same-origin em `/bff` apenas como camada de transporte. O browser fala com o `app`, o `app` encaminha para o FastAPI via `APP_API_BASE_URL_SERVER`, e o FastAPI continua como unica fonte de verdade. Nao ha Prisma nem logica de dominio duplicada no Next.
 
 ## Desenvolvimento local
 
@@ -69,4 +69,4 @@ Para desenvolvimento local com portas publicadas no host, use o override `docker
 ./scripts/deploy/up.sh
 ```
 
-O script de portas seleciona `APP_HOST_PORT` e `BACKEND_HOST_PORT`, escreve `.deploy.env` e ajusta `NEXT_PUBLIC_API_BASE_URL` para a API Python escolhida.
+O script de portas seleciona `APP_HOST_PORT` e `BACKEND_HOST_PORT`, escreve `.deploy.env` e preenche variaveis locais de compatibilidade. Em runtime, o browser usa `/bff` no mesmo dominio da aplicacao.

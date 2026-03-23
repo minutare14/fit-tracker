@@ -16,32 +16,48 @@ const isApiSuccess = <T>(value: unknown): value is ApiSuccess<T> => {
   return "data" in (value as Record<string, unknown>);
 };
 
-const browserApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
 const serverApiBaseUrl =
-  process.env.API_BASE_URL_SERVER?.replace(/\/$/, "") ?? browserApiBaseUrl;
+  process.env.API_BASE_URL_SERVER?.replace(/\/$/, "") ??
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
+  "";
+const browserBffBasePath = "/bff";
 
 const resolveInput = (input: RequestInfo | URL): RequestInfo | URL => {
   if (typeof input !== "string" || !input.startsWith("/")) {
     return input;
   }
 
-  const baseUrl = typeof window === "undefined" ? serverApiBaseUrl : browserApiBaseUrl;
-  if (!baseUrl) {
+  if (typeof window !== "undefined") {
+    if (input.startsWith("/api/")) {
+      return `${browserBffBasePath}${input}`;
+    }
     return input;
   }
 
-  return `${baseUrl}${input}`;
+  if (!serverApiBaseUrl) {
+    return input;
+  }
+
+  return `${serverApiBaseUrl}${input}`;
 };
 
 export async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
-  const response = await fetch(resolveInput(input), {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: init?.cache ?? "no-store",
-  });
+  const resolvedInput = resolveInput(input);
+  let response: Response;
+
+  try {
+    response = await fetch(resolvedInput, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+      cache: init?.cache ?? "no-store",
+    });
+  } catch {
+    const target = typeof resolvedInput === "string" ? resolvedInput : resolvedInput.toString();
+    throw new Error(`Nao foi possivel conectar ao servico da aplicacao em ${target}.`);
+  }
 
   if (response.status === 204) {
     return undefined as unknown as T;
