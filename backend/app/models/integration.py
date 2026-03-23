@@ -28,7 +28,6 @@ class IntegrationConnection(StringIdMixin, TimestampMixin, Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     provider: Mapped[IntegrationProvider] = mapped_column(Enum(IntegrationProvider), index=True)
     status: Mapped[str] = mapped_column(String(32), default="DISCONNECTED")
-    api_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
     external_user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -83,9 +83,9 @@ export default function ProfileSettingsForm({ userId }: ProfileSettingsFormProps
           signal: controller.signal,
         });
         setForm({ ...defaultProfile, ...data, userId });
-      } catch (err: any) {
-        if (err.name !== "AbortError") {
-          setError(resolveAppErrorMessage(err));
+      } catch (err: unknown) {
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          setError(resolveAppErrorMessage(err instanceof Error ? err : new Error("Falha ao carregar perfil.")));
         }
       } finally {
         setIsLoading(false);
@@ -111,8 +111,8 @@ export default function ProfileSettingsForm({ userId }: ProfileSettingsFormProps
 
       setForm({ ...defaultProfile, ...payload.profile, userId });
       setSuccess("Perfil salvo com sucesso.");
-    } catch (err: any) {
-      setError(resolveAppErrorMessage(err));
+    } catch (err: unknown) {
+      setError(resolveAppErrorMessage(err instanceof Error ? err : new Error("Falha ao salvar perfil.")));
     } finally {
       setIsSaving(false);
     }

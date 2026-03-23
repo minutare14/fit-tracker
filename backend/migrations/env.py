@@ -1,11 +1,11 @@
 from logging.config import fileConfig
 
 from alembic import context
+from sqlalchemy import create_engine
 
 from app.core.config import settings
 from app.db.base import Base
 from app.models import *  # noqa: F403
-from app.db.session import sync_engine
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url_sync)
@@ -29,11 +29,13 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    sync_engine = create_engine(settings.database_url_sync, future=True, pool_pre_ping=True)
     with sync_engine.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
+    sync_engine.dispose()
 
 
 if context.is_offline_mode():

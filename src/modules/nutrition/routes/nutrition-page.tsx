@@ -1,30 +1,30 @@
 "use client";
 
-import { useViewResource } from "@/modules/core/hooks/use-view-resource";
-import { getNutritionOverview } from "@/modules/nutrition/api/get-nutrition-overview";
 import { AppShell } from "@/modules/core/ui/app-shell";
 import { MetricTile } from "@/modules/core/ui/metric-tile";
 import { StatePanel } from "@/modules/core/ui/state-panel";
 import { SurfaceCard } from "@/modules/core/ui/surface-card";
+import { useViewResource } from "@/modules/core/hooks/use-view-resource";
+import { getNutritionOverview } from "@/modules/nutrition/api/get-nutrition-overview";
 
 export function NutritionPageRoute() {
   const resource = useViewResource({
     scope: "nutrition-page",
     fetcher: getNutritionOverview,
-    isEmpty: (data) => !data || data.stats.totalTrackedDays === 0,
+    isEmpty: (data) => !data || !data.availability.hasData,
   });
 
   return (
     <AppShell
-      title="Nutrição & Macros"
-      subtitle="Estatísticas sumarizadas e visão geral do histórico nutricional validado no banco."
+      title="Nutricao & Macros"
+      subtitle="Historico nutricional consolidado a partir do Auto Export e metas operacionais do perfil."
     >
       <div className="space-y-8">
         {resource.isLoading ? (
           <StatePanel
             eyebrow="Nutricao"
-            title="Consolidando dados agregados"
-            description="Buscando estatisticas validadas de ingestao calorica e aderencia do banco real."
+            title="Consolidando dados nutricionais"
+            description="Buscando cobertura, medias de 7 dias e aderencia operacional."
           />
         ) : resource.isError ? (
           <StatePanel
@@ -44,73 +44,97 @@ export function NutritionPageRoute() {
         ) : resource.isEmpty || !resource.data ? (
           <StatePanel
             eyebrow="Nutricao"
-            title="Sem historico nutricional valido"
-            description="Ainda nao ha log nutricional no sistema."
+            title="Sem historico nutricional consolidado"
+            description={resource.data?.emptyStateReason ?? "Ainda nao ha dias suficientes de nutricao no sistema."}
           />
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <MetricTile
                 label="Aderencia 7d"
-                value={`${resource.data.stats.adherenceRate7d}%`}
-                helper="Percentual dos ultimos 7 registros marcados como aderentes."
-                tone={resource.data.stats.adherenceRate7d >= 80 ? "primary" : "default"}
+                value={`${resource.data.summary.adherenceRate7d}%`}
+                helper="Percentual recente comparado com as metas do perfil."
+                tone={resource.data.summary.adherenceRate7d >= 80 ? "primary" : "default"}
               />
               <MetricTile
-                label="Calorias (Media 7d)"
-                value={`${Math.round(resource.data.stats.avgCalories7d)} kcal`}
-                helper="Injestao media recente."
+                label="Calorias 7d"
+                value={`${Math.round(resource.data.summary.avgCalories7d)} kcal`}
+                helper="Media recente dos dias acompanhados."
               />
               <MetricTile
-                label="Macros atingidos"
-                value={`${resource.data.stats.macrosHit7d} dias`}
-                helper="Frequencia de bater metas de macros."
+                label="Hidratacao 7d"
+                value={
+                  resource.data.summary.avgHydration7d !== null
+                    ? `${resource.data.summary.avgHydration7d} L`
+                    : "--"
+                }
+                helper="Media de hidratacao registrada."
               />
               <MetricTile
-                label="Registros Totais"
-                value={String(resource.data.stats.totalTrackedDays)}
-                helper="Dias de monitoramento nutricional no sistema."
+                label="Cobertura"
+                value={`${resource.data.availability.daysTracked} dias`}
+                helper={`Fonte principal: ${resource.data.availability.source}`}
               />
             </div>
 
-            <SurfaceCard eyebrow="Historico" title="Ultimos Registros Nutricionais">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                    <tr>
-                      <th className="pb-3">Data</th>
-                      <th className="pb-3">Calorias</th>
-                      <th className="pb-3 text-center">Proteínas</th>
-                      <th className="pb-3 text-center">Carboidratos</th>
-                      <th className="pb-3 text-center">Gorduras</th>
-                      <th className="pb-3 text-right">Agua</th>
-                      <th className="pb-3 text-right">Meta</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                    {resource.data.recentLogs.map((log) => (
-                      <tr key={log.date}>
-                        <td className="py-3 font-medium text-slate-900 dark:text-white">
-                          {new Date(log.date + "T12:00:00Z").toLocaleDateString("pt-BR")}
-                        </td>
-                        <td className="py-3 font-bold text-primary">{log.calories} kcal</td>
-                        <td className="py-3 text-center text-slate-600 dark:text-slate-300">{log.protein}g</td>
-                        <td className="py-3 text-center text-slate-600 dark:text-slate-300">{log.carbs}g</td>
-                        <td className="py-3 text-center text-slate-600 dark:text-slate-300">{log.fat}g</td>
-                        <td className="py-3 text-right text-slate-600 dark:text-slate-300">{log.waterLiters}L</td>
-                        <td className="py-3 text-right font-medium">
-                          {log.isAdherent ? (
-                            <span className="text-emerald-500">Aderente</span>
-                          ) : (
-                            <span className="text-red-500">Fora</span>
-                          )}
-                        </td>
+            <div className="grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+              <SurfaceCard eyebrow="Historico" title="Ultimos dias registrados">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                      <tr>
+                        <th className="pb-3">Data</th>
+                        <th className="pb-3">Calorias</th>
+                        <th className="pb-3">Proteina</th>
+                        <th className="pb-3">Carbs</th>
+                        <th className="pb-3">Gordura</th>
+                        <th className="pb-3">Agua</th>
+                        <th className="pb-3">Fonte</th>
+                        <th className="pb-3">Aderencia</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </SurfaceCard>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                      {resource.data.history.map((entry) => (
+                        <tr key={entry.date}>
+                          <td className="py-3 font-medium text-slate-900 dark:text-white">
+                            {new Date(`${entry.date}T12:00:00Z`).toLocaleDateString("pt-BR")}
+                          </td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">{entry.calories ?? "--"}</td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">{entry.protein ?? "--"}</td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">{entry.carbs ?? "--"}</td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">{entry.fat ?? "--"}</td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">{entry.hydration ?? "--"}</td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">{entry.source}</td>
+                          <td className="py-3 text-slate-600 dark:text-slate-300">
+                            {entry.adherence === null ? "--" : entry.adherence ? "Dentro" : "Fora"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </SurfaceCard>
+
+              <SurfaceCard eyebrow="Metas" title="Referencias do perfil">
+                <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    Calorias alvo: {resource.data.targets.calories ?? "--"}
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    Proteina alvo: {resource.data.targets.protein ?? "--"}
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    Carbo alvo: {resource.data.targets.carbs ?? "--"}
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    Gordura alvo: {resource.data.targets.fat ?? "--"}
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+                    Hidratacao alvo: {resource.data.targets.hydration ?? "--"}
+                  </div>
+                </div>
+              </SurfaceCard>
+            </div>
           </>
         )}
       </div>

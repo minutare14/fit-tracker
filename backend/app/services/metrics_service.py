@@ -62,7 +62,7 @@ class MetricsService:
             {
                 "bjj_load": bjj_load,
                 "strength_volume_kg": strength_volume_kg,
-                "recovery_score": recovery_score,
+                "recovery_score": recovery_score or 0,
                 "sleep_hours": (sleep_seconds / 3600.0) if sleep_seconds else None,
                 "weight_kg": weight_kg,
                 "readiness_label": readiness_label(recovery_score),
@@ -99,7 +99,6 @@ class MetricsService:
         acute_load = calculate_acute_load(loads)
         chronic_load = calculate_chronic_load(loads)
         acwr = calculate_acwr(acute_load, chronic_load)
-        readiness_score = recovery_score if recovery_score is not None else 70
 
         derived_query = select(DerivedMetric).where(
             DerivedMetric.user_id == user_id,
@@ -114,18 +113,37 @@ class MetricsService:
         derived_metric.acute_load = acute_load
         derived_metric.chronic_load = chronic_load
         derived_metric.acwr = acwr
-        derived_metric.readiness_score = readiness_score
+        derived_metric.readiness_score = recovery_score
 
-        snapshot = ReadinessSnapshot(
-            user_id=user_id,
-            date=normalized_day,
-            readiness_score=readiness_score,
-            hrv_value=hrv,
-            resting_hr_value=resting_hr,
-            sleep_hours=(sleep_seconds / 3600.0) if sleep_seconds else None,
-            explanation=readiness_label(readiness_score),
+        snapshot_query = select(ReadinessSnapshot).where(
+            ReadinessSnapshot.user_id == user_id,
+            ReadinessSnapshot.date == normalized_day,
         )
-        self.session.add(snapshot)
+        snapshot = (await self.session.execute(snapshot_query)).scalar_one_or_none()
+        if recovery_score is None:
+            if snapshot:
+                await self.session.delete(snapshot)
+            await self.session.flush()
+            return derived_metric
+
+        if not snapshot:
+            snapshot = ReadinessSnapshot(
+                user_id=user_id,
+                date=normalized_day,
+                readiness_score=recovery_score,
+                hrv_value=hrv,
+                resting_hr_value=resting_hr,
+                sleep_hours=(sleep_seconds / 3600.0) if sleep_seconds else None,
+                explanation=readiness_label(recovery_score),
+            )
+            self.session.add(snapshot)
+        else:
+            snapshot.readiness_score = recovery_score
+            snapshot.hrv_value = hrv
+            snapshot.resting_hr_value = resting_hr
+            snapshot.sleep_hours = (sleep_seconds / 3600.0) if sleep_seconds else None
+            snapshot.explanation = readiness_label(recovery_score)
+
         await self.session.flush()
         return derived_metric
 

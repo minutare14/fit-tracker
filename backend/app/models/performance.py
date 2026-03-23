@@ -1,11 +1,10 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.common import StringIdMixin, TimestampMixin
-from sqlalchemy.orm import relationship
 
 
 class BjjTechnique(StringIdMixin, TimestampMixin, Base):
@@ -17,6 +16,7 @@ class BjjTechnique(StringIdMixin, TimestampMixin, Base):
     gi_mode: Mapped[str] = mapped_column(String(16), default="both")
     created_by_user: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     active: Mapped[bool] = mapped_column(default=True)
+    session_links = relationship("BjjSessionTechnique", back_populates="technique", cascade="all, delete-orphan")
 
 
 class BjjSessionTechnique(Base):
@@ -24,7 +24,9 @@ class BjjSessionTechnique(Base):
 
     session_id: Mapped[str] = mapped_column(ForeignKey("bjj_sessions.id", ondelete="CASCADE"), primary_key=True)
     technique_id: Mapped[str] = mapped_column(ForeignKey("bjj_techniques.id", ondelete="CASCADE"), primary_key=True)
-    type: Mapped[str] = mapped_column(String(32), primary_key=True)  # trained, successful, suffered
+    type: Mapped[str] = mapped_column(String(32), primary_key=True)  # trained, worked, suffered
+    session = relationship("BjjSession", back_populates="technique_links")
+    technique = relationship("BjjTechnique", back_populates="session_links")
 
 
 class BjjSession(StringIdMixin, TimestampMixin, Base):
@@ -42,6 +44,7 @@ class BjjSession(StringIdMixin, TimestampMixin, Base):
     session_load: Mapped[int] = mapped_column(Integer, index=True)
     rounds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     round_duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    round_rest_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sparring_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     drill_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     technique_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -52,7 +55,9 @@ class BjjSession(StringIdMixin, TimestampMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     fatigue_before: Mapped[int | None] = mapped_column(Integer, nullable=True)
     pain_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    injury_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     session_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    technique_links = relationship("BjjSessionTechnique", back_populates="session", cascade="all, delete-orphan", lazy="selectin")
 
 
 class WeightEntry(StringIdMixin, TimestampMixin, Base):
@@ -83,10 +88,11 @@ class DerivedMetric(StringIdMixin, TimestampMixin, Base):
 
 class ReadinessSnapshot(StringIdMixin, TimestampMixin, Base):
     __tablename__ = "readiness_snapshots"
+    __table_args__ = (UniqueConstraint("user_id", "date", name="uq_readiness_snapshots_user_date"),)
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    readiness_score: Mapped[int] = mapped_column(Integer)
+    readiness_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     hrv_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     resting_hr_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     sleep_hours: Mapped[float | None] = mapped_column(Float, nullable=True)

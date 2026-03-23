@@ -25,7 +25,6 @@ class IntegrationRepository(BaseRepository):
         provider: IntegrationProvider,
         *,
         status: str,
-        api_key: str | None = None,
         external_user_id: str | None = None,
         last_error: str | None = None,
         credentials: dict | None = None,
@@ -34,7 +33,6 @@ class IntegrationRepository(BaseRepository):
             user_id=user_id,
             provider=provider,
             status=status,
-            api_key=api_key,
             external_user_id=external_user_id,
             last_error=last_error,
             credentials=credentials,
@@ -43,7 +41,6 @@ class IntegrationRepository(BaseRepository):
             index_elements=["user_id", "provider"],
             set_={
                 "status": status,
-                "api_key": api_key,
                 "external_user_id": external_user_id,
                 "last_error": last_error,
                 "credentials": credentials,

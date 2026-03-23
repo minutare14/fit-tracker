@@ -1,26 +1,25 @@
-## Fit Tracker
+# Fit Tracker
 
-Frontend em Next.js/TypeScript com backend principal em Python/FastAPI.
+Aplicacao com frontend em Next.js e backend principal em Python/FastAPI.
 
-## Stack oficial
+## Stack
 
-- frontend: Next.js + React + TypeScript
-- backend: FastAPI + Pydantic + SQLAlchemy + Alembic
-- banco: PostgreSQL
-- jobs/syncs: worker Python em `backend/app/workers`
+- `frontend`: Next.js + React + TypeScript
+- `backend`: FastAPI + Pydantic + SQLAlchemy + Alembic
+- `db`: PostgreSQL
 
-As regras de negócio, integrações, webhooks, syncs, persistência e métricas analíticas ficam no backend Python. O frontend consome a API em `/api/...` usando `NEXT_PUBLIC_API_BASE_URL`.
+O frontend consome a API Python diretamente via `NEXT_PUBLIC_API_BASE_URL`, e o SSR usa `APP_API_BASE_URL_SERVER` dentro do container. Nao ha proxy interno do Next nem Prisma como fonte de verdade.
 
-## Desenvolvimento
+## Desenvolvimento local
 
-Frontend:
+1. Copie os exemplos de ambiente:
 
 ```bash
-npx prisma generate
-npm run dev
+cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Backend:
+2. Inicie o backend:
 
 ```bash
 cd backend
@@ -29,60 +28,43 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
-Abra o frontend em [http://localhost:3000](http://localhost:3000).
+3. Inicie o frontend:
 
-## Variáveis importantes
+```bash
+npm install
+npm run dev
+```
 
-- `NEXT_PUBLIC_API_BASE_URL`: base pública da API FastAPI, por exemplo `http://localhost:8000`
-- `DATABASE_URL`: conexão assíncrona do backend Python
-- `DATABASE_URL_SYNC`: conexão síncrona usada por Alembic
-- `HEVY_API_KEY`: fallback opcional apenas para desenvolvimento
-- `HEALTH_AUTO_EXPORT_SECRET`: fallback opcional para webhook
+## Health
 
-## Fluxos principais ligados ao backend Python
+- `GET /api/health`
+- `GET /api/health/db`
 
-- `GET/PUT /api/settings/profile`
-- `GET /api/settings/integrations`
-- `PUT /api/settings/integrations/hevy`
-- `POST /api/settings/integrations/hevy/test`
-- `POST /api/settings/integrations/hevy/sync`
-- `PUT /api/settings/integrations/autoexport`
-- `PUT /api/settings/integrations/ai`
-- `GET/POST/PUT/DELETE /api/bjj-sessions`
+## Fluxo principal
+
 - `GET /api/dashboard/overview`
+- `GET /api/bjj-sessions`
 - `GET /api/recovery/overview`
+- `GET /api/weight/overview`
+- `GET /api/weight/entries`
+- `GET /api/nutrition/overview`
 - `GET /api/insights/overview`
+- `GET /api/settings/profile`
+- `GET /api/settings/integrations`
+- `PUT /api/settings/hevy`
+- `POST /api/settings/hevy/test`
+- `POST /api/settings/hevy/sync`
+- `PUT /api/settings/autoexport`
+- `PUT /api/settings/ai`
 - `POST /api/webhooks/health/autoexport`
 
-## Nota sobre rotas Next legadas
+## Compose
 
-Ainda existem rotas Next antigas fora do fluxo principal. Elas não são mais a fonte oficial de backend e devem ser tratadas como compatibilidade temporária enquanto a migração total para FastAPI é concluída.
-
-## Deploy sem colisão de porta
-
-The app no longer assumes host port `3000` is free.
-The main [docker-compose.yml](/Users/emano/OneDrive/Documentos/Downloads/fit-tracker/docker-compose.yml) stays at the repository root so it can be reached directly during operations and deploys.
-
-1. Audit the host and choose a free port automatically:
+O compose raiz sobe apenas `app`, `backend` e `db`. O frontend publica a interface, o backend publica a API, e o Postgres fica na rede interna. O health principal da stack fica no backend em `/api/health`.
 
 ```bash
 ./scripts/deploy/select_port.sh
-```
-
-2. Build and start the stack with the selected port:
-
-```bash
 ./scripts/deploy/up.sh
 ```
 
-The script inspects the real host with `ss`, `netstat`, or `lsof`, writes `.deploy.env`, and starts Docker Compose with a free `APP_HOST_PORT`.
-
-On the current VPS audited for this project, `3000` and `3010` are already occupied by other workloads, so use an explicitly verified free port such as `3020` only after checking the host.
-
-Useful commands:
-
-```bash
-docker compose --env-file .env --env-file .deploy.env ps
-docker compose --env-file .env --env-file .deploy.env logs -f app
-curl http://127.0.0.1:$(grep APP_HOST_PORT .deploy.env | cut -d= -f2)
-```
+O script de portas seleciona `APP_HOST_PORT` e `BACKEND_HOST_PORT`, escreve `.deploy.env` e ajusta `NEXT_PUBLIC_API_BASE_URL` para a API Python escolhida.

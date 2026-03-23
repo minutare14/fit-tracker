@@ -21,6 +21,7 @@ export interface RawBjjSessionFormValues {
   srpe: string;
   rounds: string;
   roundDurationMinutes: string;
+  roundRestMinutes: string;
   sparringMinutes: string;
   drillMinutes: string;
   techniqueMinutes: string;
@@ -31,6 +32,7 @@ export interface RawBjjSessionFormValues {
   notes: string;
   fatigueBefore: string;
   painLevel: string;
+  injuryNotes: string;
   sessionScore: string;
 }
 
@@ -46,6 +48,7 @@ export function getDefaultBjjSessionFormValues(): RawBjjSessionFormValues {
     srpe: "7",
     rounds: "",
     roundDurationMinutes: "",
+    roundRestMinutes: "",
     sparringMinutes: "",
     drillMinutes: "",
     techniqueMinutes: "",
@@ -56,6 +59,7 @@ export function getDefaultBjjSessionFormValues(): RawBjjSessionFormValues {
     notes: "",
     fatigueBefore: "",
     painLevel: "",
+    injuryNotes: "",
     sessionScore: "",
   };
 }
@@ -103,6 +107,7 @@ export function parseBjjSessionForm(values: RawBjjSessionFormValues): {
       srpe,
       rounds: parseOptionalNumber(values.rounds),
       roundDurationMinutes: parseOptionalNumber(values.roundDurationMinutes),
+      roundRestMinutes: parseOptionalNumber(values.roundRestMinutes),
       sparringMinutes: parseOptionalNumber(values.sparringMinutes),
       drillMinutes: parseOptionalNumber(values.drillMinutes),
       techniqueMinutes: parseOptionalNumber(values.techniqueMinutes),
@@ -113,6 +118,7 @@ export function parseBjjSessionForm(values: RawBjjSessionFormValues): {
       notes: values.notes || null,
       fatigueBefore: parseOptionalNumber(values.fatigueBefore),
       painLevel: parseOptionalNumber(values.painLevel),
+      injuryNotes: values.injuryNotes || null,
       sessionScore: parseOptionalNumber(values.sessionScore),
     },
     errors: [],

@@ -41,6 +41,8 @@ class AISettingsRead(APIModel):
     configured: bool
     provider: str
     model: str
+    has_api_key: bool = False
+    masked_api_key: str | None = None
 
 
 class SettingsIntegrationsRead(APIModel):
@@ -75,3 +77,4 @@ class AISettingsWrite(APIModel):
     user_id: str = Field(default="default-user")
     provider: str = "openai"
     model: str = "gpt-4.1-mini"
+    api_key: str | None = None

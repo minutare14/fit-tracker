@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation"
 
 const navItems = [
   { label: "Dashboard", icon: "grid_view", href: "/" },
-  { label: "Strength Training", icon: "fitness_center", href: "/strength" },
   { label: "Jiu-Jitsu Sessions", icon: "sports_kabaddi", href: "/bjj" },
   { label: "Health & Recovery", icon: "ecg_heart", href: "/health" },
   { label: "Weight & Comp", icon: "scale", href: "/weight" },

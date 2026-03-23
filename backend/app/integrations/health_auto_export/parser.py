@@ -7,6 +7,8 @@ class HealthAutoExportParser:
         "resting_heart_rate": "RHR",
         "sleep_analysis": "Sleep",
         "body_mass": "Weight",
+        "body_temperature": "BodyTemp",
+        "apple_sleeping_wrist_temperature": "BodyTemp",
         "active_energy": "ActiveCalories",
         "basal_energy_burned": "BasalCalories",
         "step_count": "Steps",
@@ -17,6 +19,17 @@ class HealthAutoExportParser:
         "total_fat": "Fat",
         "fiber": "Fiber",
         "dietary_water": "Water",
+        "body_temperature": "BodyTemp",
+        "apple_sleeping_wrist_temperature": "BodyTemp",
+    }
+
+    NUTRITION_FIELD_MAP = {
+        "Calories": "calories",
+        "Carbs": "carbs",
+        "Protein": "protein",
+        "Fat": "fat",
+        "Fiber": "fiber",
+        "Water": "water_liters",
     }
 
     @classmethod

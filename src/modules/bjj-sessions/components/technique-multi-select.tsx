@@ -152,7 +152,9 @@ export function TechniqueMultiSelect({ value, onChange, placeholder }: Technique
                   onClick={() => {
                     addTag(tech.name);
                     setIsOpen(false);
-                    document.activeElement instanceof HTMLElement && document.activeElement.blur();
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
                   }}
                 >
                   <span className="font-medium">{tech.name}</span>

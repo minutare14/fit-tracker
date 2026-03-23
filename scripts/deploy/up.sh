@@ -20,5 +20,7 @@ docker compose --env-file .env --env-file .deploy.env up -d --build
 docker compose --env-file .env --env-file .deploy.env ps
 
 APP_HOST_PORT=$(grep '^APP_HOST_PORT=' .deploy.env | cut -d= -f2)
+BACKEND_HOST_PORT=$(grep '^BACKEND_HOST_PORT=' .deploy.env | cut -d= -f2)
 echo
 echo "App expected at: http://127.0.0.1:${APP_HOST_PORT}"
+echo "Backend expected at: http://127.0.0.1:${BACKEND_HOST_PORT}"

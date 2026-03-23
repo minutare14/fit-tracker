@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import AppError
 from app.integrations.hevy.client import HevyClient
 from app.models.hevy import HevyWorkout
-from app.models.integration import IntegrationConnection, IntegrationProvider, SyncRun
+from app.models.integration import IntegrationProvider, SyncRun
 from app.repositories.integration_repository import IntegrationRepository
 from app.schemas.hevy import HevySyncResult
 from app.schemas.settings import (
@@ -23,7 +23,7 @@ from app.schemas.settings import (
     SettingsIntegrationsRead,
 )
 from app.services.hevy_service import HevyService
-from app.services.secret_service import SecretService, mask_secret
+from app.services.secret_service import SecretService
 
 
 class SettingsService:
@@ -42,6 +42,7 @@ class SettingsService:
         hevy_masked = await self.secret_service.get_masked_secret(user_id, IntegrationProvider.HEVY, "API_KEY")
         health_secret = await self.secret_service.get_masked_secret(user_id, IntegrationProvider.HEALTH_AUTO_EXPORT, "WEBHOOK_SECRET")
         health_header = await self.secret_service.get_secret(user_id, IntegrationProvider.HEALTH_AUTO_EXPORT, "HEADER_NAME")
+        ai_masked = await self.secret_service.get_masked_secret(user_id, IntegrationProvider.AI, "API_KEY")
         sync_runs = list(
             (
                 await self.session.execute(
@@ -83,9 +84,11 @@ class SettingsService:
                 last_error=health_connection.last_error if health_connection else None,
             ),
             ai=AISettingsRead(
-                configured=bool(ai_connection),
+                configured=bool(ai_connection or ai_masked),
                 provider=str(ai_credentials.get("provider", "openai")),
                 model=str(ai_credentials.get("model", "gpt-4.1-mini")),
+                has_api_key=bool(ai_masked),
+                masked_api_key=ai_masked,
             ),
             sync_history=[
                 IntegrationLogRead(
@@ -185,6 +188,8 @@ class SettingsService:
             "provider": payload.provider,
             "model": payload.model,
         }
+        if payload.api_key:
+            await self.secret_service.save_secret(payload.user_id, IntegrationProvider.AI, "API_KEY", payload.api_key)
         await self.integration_repository.upsert_connection(
             payload.user_id,
             IntegrationProvider.AI,
@@ -193,4 +198,11 @@ class SettingsService:
             credentials=credentials,
         )
         await self.session.commit()
-        return AISettingsRead(configured=True, provider=payload.provider, model=payload.model)
+        masked_api_key = await self.secret_service.get_masked_secret(payload.user_id, IntegrationProvider.AI, "API_KEY")
+        return AISettingsRead(
+            configured=True,
+            provider=payload.provider,
+            model=payload.model,
+            has_api_key=bool(masked_api_key),
+            masked_api_key=masked_api_key,
+        )

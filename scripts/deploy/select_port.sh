@@ -4,7 +4,8 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 DEPLOY_ENV_FILE="$ROOT_DIR/.deploy.env"
 
-CANDIDATE_PORTS=${CANDIDATE_PORTS:-"3010 3080 3200 3781 4300 5300"}
+APP_CANDIDATE_PORTS=${APP_CANDIDATE_PORTS:-"3010 3080 3200 3781 4300 5300"}
+BACKEND_CANDIDATE_PORTS=${BACKEND_CANDIDATE_PORTS:-"8000 8100 8200 8300 8400 8500"}
 
 collect_used_ports() {
   if command -v ss >/dev/null 2>&1; then
@@ -42,35 +43,50 @@ is_used() {
   echo "$USED_PORTS" | tr ' ' '\n' | grep -qx "$port"
 }
 
-SELECTED_PORT=""
-for port in $CANDIDATE_PORTS; do
-  if ! is_used "$port"; then
-    SELECTED_PORT="$port"
-    break
-  fi
-done
+select_free_port() {
+  candidate_ports="$1"
+  fallback_start="$2"
+  fallback_end="$3"
 
-if [ -z "$SELECTED_PORT" ]; then
-  port=3001
-  while [ "$port" -le 3999 ]; do
+  selected_port=""
+  for port in $candidate_ports; do
     if ! is_used "$port"; then
-      SELECTED_PORT="$port"
+      selected_port="$port"
       break
     fi
-    port=$((port + 1))
   done
-fi
 
-if [ -z "$SELECTED_PORT" ]; then
-  echo "Failed to find a free host port." >&2
+  if [ -z "$selected_port" ]; then
+    port="$fallback_start"
+    while [ "$port" -le "$fallback_end" ]; do
+      if ! is_used "$port"; then
+        selected_port="$port"
+        break
+      fi
+      port=$((port + 1))
+    done
+  fi
+
+  printf '%s' "$selected_port"
+}
+
+SELECTED_APP_PORT=$(select_free_port "$APP_CANDIDATE_PORTS" 3001 3999)
+SELECTED_BACKEND_PORT=$(select_free_port "$BACKEND_CANDIDATE_PORTS" 8001 8999)
+
+if [ -z "$SELECTED_APP_PORT" ] || [ -z "$SELECTED_BACKEND_PORT" ]; then
+  echo "Failed to find free ports for app/backend." >&2
   exit 1
 fi
 
 cat >"$DEPLOY_ENV_FILE" <<EOF
-APP_HOST_PORT=$SELECTED_PORT
+APP_HOST_PORT=$SELECTED_APP_PORT
+BACKEND_HOST_PORT=$SELECTED_BACKEND_PORT
 APP_INTERNAL_PORT=${APP_INTERNAL_PORT:-3000}
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:$SELECTED_BACKEND_PORT
+CORS_ORIGINS=http://127.0.0.1:$SELECTED_APP_PORT,http://localhost:$SELECTED_APP_PORT
 EOF
 
 echo
-echo "Selected APP_HOST_PORT=$SELECTED_PORT"
+echo "Selected APP_HOST_PORT=$SELECTED_APP_PORT"
+echo "Selected BACKEND_HOST_PORT=$SELECTED_BACKEND_PORT"
 echo "Wrote $DEPLOY_ENV_FILE"

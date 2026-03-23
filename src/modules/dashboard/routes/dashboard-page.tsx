@@ -27,7 +27,7 @@ export function DashboardPage() {
     setSyncMessage(null);
 
     try {
-      await requestJson("/api/settings/integrations/hevy/sync", {
+      await requestJson("/api/settings/hevy/sync", {
         method: "POST",
         body: JSON.stringify({ mode: "delta" }),
       });
@@ -40,10 +40,10 @@ export function DashboardPage() {
     }
   };
 
-  const statusBadges = resource.data?.sources.map((source) => (
+  const statusBadges = resource.data?.sources?.map((source) => (
     <StatusBadge
       key={source.label}
-      label={`${source.label} · ${source.detail}`}
+      label={`${source.label} - ${source.detail}`}
       tone={source.state === "connected" ? "success" : source.state === "warning" ? "warning" : "danger"}
     />
   ));
@@ -127,7 +127,7 @@ export function DashboardPage() {
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {resource.data.metrics.map((metric) => (
+                  {resource.data.metrics?.map((metric) => (
                 <MetricTile key={metric.label} label={metric.label} value={metric.value} helper={metric.helper} tone={metric.label === "Readiness" ? "primary" : "default"} />
               ))}
             </div>
@@ -137,7 +137,7 @@ export function DashboardPage() {
 
               <SurfaceCard eyebrow="Acoes recomendadas" title="Proximos passos">
                 <div className="space-y-3">
-                  {resource.data.recommendations.map((item) => (
+                  {resource.data.recommendations?.map((item) => (
                     <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-slate-300">
                       {item}
                     </div>
@@ -148,7 +148,7 @@ export function DashboardPage() {
 
             <SurfaceCard eyebrow="Ultimas sessoes" title="Historico recente">
               <div className="space-y-4">
-                {resource.data.recentSessions.length ? (
+                {resource.data.recentSessions?.length ? (
                   resource.data.recentSessions.map((session) => (
                     <div
                       key={session.id}

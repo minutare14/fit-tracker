@@ -116,6 +116,10 @@ export function BjjSessionForm({
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Tempo/Round (min)</span>
             <input className={inputClassName} type="number" min="1" value={values.roundDurationMinutes} onChange={(event) => onChange("roundDurationMinutes", event.target.value)} />
           </label>
+          <label className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Descanso/Round (min)</span>
+            <input className={inputClassName} type="number" min="0" value={values.roundRestMinutes} onChange={(event) => onChange("roundRestMinutes", event.target.value)} />
+          </label>
           <div className="space-y-2">
             <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Sparring (Total)</span>
             <div className={`flex h-[46px] items-center px-4 rounded-2xl border ${values.rounds && values.roundDurationMinutes ? "border-primary/20 bg-primary/5 text-primary" : "border-slate-200 bg-slate-50 text-slate-500 dark:border-zinc-800 dark:bg-zinc-900"}`}>
@@ -164,7 +168,7 @@ export function BjjSessionForm({
 
       <section className="space-y-4">
         <h3 className={sectionTitleClassName}>Estado fisico</h3>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
               Fadiga pre <span className="font-normal normal-case tracking-normal text-slate-400 ml-1">(1 Descansado - 10 Morto)</span>
@@ -174,6 +178,10 @@ export function BjjSessionForm({
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Dor / lesao</span>
             <input className={inputClassName} type="number" min="1" max="10" value={values.painLevel} onChange={(event) => onChange("painLevel", event.target.value)} />
+          </label>
+          <label className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Lesao / restricao</span>
+            <input className={inputClassName} value={values.injuryNotes} onChange={(event) => onChange("injuryNotes", event.target.value)} />
           </label>
           <label className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Nota geral</span>

@@ -80,10 +80,14 @@ class Settings(BaseSettings):
             self.database_url = self.database_url.replace("postgres://", "postgresql+asyncpg://", 1)
         if self.database_url.startswith("postgresql://"):
             self.database_url = self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if self.database_url.startswith("postgresql+psycopg://"):
+            self.database_url = self.database_url.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
         if self.database_url_sync.startswith("postgres://"):
             self.database_url_sync = self.database_url_sync.replace("postgres://", "postgresql+psycopg://", 1)
         if self.database_url_sync.startswith("postgresql://"):
             self.database_url_sync = self.database_url_sync.replace("postgresql://", "postgresql+psycopg://", 1)
+        if self.database_url_sync.startswith("postgresql+asyncpg://"):
+            self.database_url_sync = self.database_url_sync.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
         return self
 
     @staticmethod

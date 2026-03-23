@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.performance import BjjTechnique
@@ -19,7 +19,7 @@ class BjjTechniquesService:
             select(BjjTechnique)
             .where(
                 BjjTechnique.created_by_user == user_id,
-                BjjTechnique.active == True
+                BjjTechnique.active.is_(True),
             )
             .order_by(BjjTechnique.name.asc())
         )
@@ -29,10 +29,9 @@ class BjjTechniquesService:
     async def create_technique(self, user_id: str, payload: BjjTechniqueCreate) -> BjjTechniqueRead:
         await self.integration_repository.ensure_user(user_id)
         
-        # Check if already exists (simple name check)
         query = select(BjjTechnique).where(
             BjjTechnique.created_by_user == user_id,
-            BjjTechnique.name.ilike(payload.name)
+            func.lower(BjjTechnique.name) == payload.name.strip().lower(),
         )
         existing = (await self.session.execute(query)).scalar_one_or_none()
         if existing:

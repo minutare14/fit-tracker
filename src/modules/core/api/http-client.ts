@@ -16,24 +16,21 @@ const isApiSuccess = <T>(value: unknown): value is ApiSuccess<T> => {
   return "data" in (value as Record<string, unknown>);
 };
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const browserApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const serverApiBaseUrl =
+  process.env.API_BASE_URL_SERVER?.replace(/\/$/, "") ?? browserApiBaseUrl;
 
 const resolveInput = (input: RequestInfo | URL): RequestInfo | URL => {
   if (typeof input !== "string" || !input.startsWith("/")) {
     return input;
   }
 
-  // In the browser, prefer the app's same-origin /api proxy so the UI does not
-  // depend on CORS or on the public API host being embedded into the client bundle.
-  if (typeof window !== "undefined") {
+  const baseUrl = typeof window === "undefined" ? serverApiBaseUrl : browserApiBaseUrl;
+  if (!baseUrl) {
     return input;
   }
 
-  if (!apiBaseUrl) {
-    return input;
-  }
-
-  return `${apiBaseUrl}${input}`;
+  return `${baseUrl}${input}`;
 };
 
 export async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
@@ -46,29 +43,22 @@ export async function requestJson<T>(input: RequestInfo | URL, init?: RequestIni
     cache: init?.cache ?? "no-store",
   });
 
-  // 204 No Content — nothing to parse
   if (response.status === 204) {
     return undefined as unknown as T;
   }
 
   const contentType = response.headers.get("content-type");
   if (contentType && !contentType.includes("application/json")) {
-    console.error(`[http-client] Expected JSON but received Content-Type: ${contentType}. URL: ${response.url}`);
-    
-    // Attempt to read as text to discover what the HTML actually is (nginx 404, Next error, etc)
     const textBody = await response.text().catch(() => "");
-    const excerpt = textBody.substring(0, 100).replace(/\n/g, " ");
+    const excerpt = textBody.substring(0, 120).replace(/\n/g, " ");
 
     throw new Error(
-      `Conexao invalida. O frontend tentou acessar o backend em [${response.url}], mas recebeu HTML em vez de JSON. ` +
-      `Sua variavel NEXT_PUBLIC_API_BASE_URL provavelmente esta apontando para o lugar errado em producao. ` + 
-      `(Recebeu: ${contentType}. Resposta: ${excerpt}...)`
+      `Resposta invalida do backend em ${response.url}. Esperado JSON, recebido ${contentType}. Exemplo: ${excerpt}`
     );
   }
 
   const payload = await response.json().catch((err: Error) => {
-    console.error(`[http-client] Failed to parse JSON: ${err.message}. URL: ${response.url}`);
-    throw new Error("Falha ao processar a resposta do servidor.");
+    throw new Error(`Falha ao processar JSON do backend: ${err.message}`);
   });
 
   if (!response.ok) {

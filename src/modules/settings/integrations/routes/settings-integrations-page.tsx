@@ -116,7 +116,7 @@ export function SettingsIntegrationsPage() {
                       disabled={busyAction === "save-hevy"}
                       onClick={() =>
                         void runAction("save-hevy", async () => {
-                          await requestJson("/api/settings/integrations/hevy", {
+                          await requestJson("/api/settings/hevy", {
                             method: "PUT",
                             body: JSON.stringify({ apiKey: hevyApiKey }),
                           });
@@ -133,7 +133,7 @@ export function SettingsIntegrationsPage() {
                       disabled={busyAction === "test-hevy"}
                       onClick={() =>
                         void runAction("test-hevy", async () => {
-                          await requestJson("/api/settings/integrations/hevy/test", {
+                          await requestJson("/api/settings/hevy/test", {
                             method: "POST",
                             body: JSON.stringify({ apiKey: hevyApiKey || undefined }),
                           });
@@ -149,7 +149,7 @@ export function SettingsIntegrationsPage() {
                       disabled={busyAction === "sync-hevy"}
                       onClick={() =>
                         void runAction("sync-hevy", async () => {
-                          await requestJson("/api/settings/integrations/hevy/sync", {
+                          await requestJson("/api/settings/hevy/sync", {
                             method: "POST",
                             body: JSON.stringify({ mode: "delta" }),
                           });
@@ -198,7 +198,7 @@ export function SettingsIntegrationsPage() {
                     disabled={busyAction === "save-health"}
                     onClick={() =>
                       void runAction("save-health", async () => {
-                        await requestJson("/api/settings/integrations/autoexport", {
+                        await requestJson("/api/settings/autoexport", {
                           method: "PUT",
                           body: JSON.stringify({
                             headerName: healthHeaderName,
@@ -244,7 +244,7 @@ export function SettingsIntegrationsPage() {
                     disabled={busyAction === "save-ai"}
                     onClick={() =>
                       void runAction("save-ai", async () => {
-                        await requestJson("/api/settings/integrations/ai", {
+                        await requestJson("/api/settings/ai", {
                           method: "PUT",
                           body: JSON.stringify({
                             provider: aiProvider,

@@ -1,8 +1,13 @@
 export interface RecoveryMetricCard {
   label: string;
+  status: "available" | "partial" | "missing";
   value: number | null;
-  unit: string;
+  unit: string | null;
   helper: string;
+  observedAt: string | null;
+  source: string | null;
+  reasonUnavailable: string | null;
+  missingInputs: string[];
 }
 
 export interface RecoveryTrendPoint {

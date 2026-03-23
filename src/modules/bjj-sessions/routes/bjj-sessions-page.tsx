@@ -37,6 +37,7 @@ const toFormValues = (session?: BjjSessionViewModel | null): RawBjjSessionFormVa
     srpe: String(session.srpe),
     rounds: session.rounds ? String(session.rounds) : "",
     roundDurationMinutes: session.roundDurationMinutes ? String(session.roundDurationMinutes) : "",
+    roundRestMinutes: session.roundRestMinutes ? String(session.roundRestMinutes) : "",
     sparringMinutes: session.sparringMinutes ? String(session.sparringMinutes) : "",
     drillMinutes: session.drillMinutes ? String(session.drillMinutes) : "",
     techniqueMinutes: session.techniqueMinutes ? String(session.techniqueMinutes) : "",
@@ -47,6 +48,7 @@ const toFormValues = (session?: BjjSessionViewModel | null): RawBjjSessionFormVa
     notes: session.notes ?? "",
     fatigueBefore: session.fatigueBefore ? String(session.fatigueBefore) : "",
     painLevel: session.painLevel ? String(session.painLevel) : "",
+    injuryNotes: session.injuryNotes ?? "",
     sessionScore: session.sessionScore ? String(session.sessionScore) : "",
   };
 };

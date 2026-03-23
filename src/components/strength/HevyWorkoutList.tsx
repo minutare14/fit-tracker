@@ -3,11 +3,36 @@
 import { useEffect, useState } from "react";
 import { Activity, Calendar, ChevronRight, Clock, Info, Zap } from "lucide-react";
 import { format } from "date-fns";
+import { requestJson } from "@/modules/core/api/http-client";
+
+interface HevySet {
+  setType?: string;
+  reps?: number | null;
+  weightKg?: number | null;
+}
+
+interface HevyExercise {
+  exerciseName: string;
+  exerciseTemplateId?: string;
+  sets?: HevySet[];
+}
+
+interface HevyWorkout {
+  id: string;
+  title?: string;
+  startedAt: string;
+  durationSeconds?: number;
+  source?: string;
+  exercisesCount?: number;
+  volumeKg?: number;
+  setsCount?: number;
+  exercises?: HevyExercise[];
+}
 
 export function HevyWorkoutList() {
-  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [workouts, setWorkouts] = useState<HevyWorkout[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<HevyWorkout | null>(null);
 
   useEffect(() => {
     fetchWorkouts();
@@ -15,8 +40,7 @@ export function HevyWorkoutList() {
 
   const fetchWorkouts = async () => {
     try {
-      const res = await fetch("/api/hevy/workouts");
-      const data = await res.json();
+      const data = await requestJson<HevyWorkout[]>("/api/hevy/workouts?userId=default-user");
       setWorkouts(data);
       setSelectedWorkout(data[0] || null);
     } catch (error) {
@@ -101,7 +125,7 @@ export function HevyWorkoutList() {
               Session Details
             </h3>
             <div className="space-y-6">
-              {selectedWorkout.exercises?.map((exercise: any, exerciseIndex: number) => (
+              {selectedWorkout.exercises?.map((exercise, exerciseIndex) => (
                 <div key={exerciseIndex} className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-black uppercase tracking-tight text-slate-200">{exerciseIndex + 1}. {exercise.exerciseName}</span>
@@ -117,7 +141,7 @@ export function HevyWorkoutList() {
                         </tr>
                       </thead>
                       <tbody className="text-slate-400">
-                        {exercise.sets?.map((set: any, setIndex: number) => (
+                        {exercise.sets?.map((set, setIndex) => (
                           <tr key={setIndex} className="border-b border-primary/5 transition-colors last:border-0 hover:bg-primary/5">
                             <td className="flex items-center gap-1.5 py-2 font-mono">
                               <span className={`h-1.5 w-1.5 rounded-full ${set.setType === "warmup" ? "bg-orange-500" : set.setType === "dropset" ? "bg-purple-500" : "bg-primary"}`}></span>

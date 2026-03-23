@@ -9,7 +9,12 @@ from app.models.integration import IntegrationConnection, IntegrationProvider
 from app.models.performance import DerivedMetric
 from app.models.wellness import HealthMetric
 from app.repositories.integration_repository import IntegrationRepository
-from app.schemas.recovery import RecoveryMetricWidgetRead, RecoveryOverviewRead, RecoverySyncStatusRead, RecoveryTrendPointRead
+from app.schemas.recovery import (
+    RecoveryMetricWidgetRead,
+    RecoveryOverviewRead,
+    RecoverySyncStatusRead,
+    RecoveryTrendPointRead,
+)
 
 
 class RecoveryService:
@@ -21,12 +26,17 @@ class RecoveryService:
         await self.integration_repository.ensure_user(user_id)
         start = datetime.now(timezone.utc) - timedelta(days=13)
 
-        query = (
-            select(HealthMetric)
-            .where(HealthMetric.user_id == user_id, HealthMetric.date >= start)
-            .order_by(HealthMetric.date.asc())
+        metrics = list(
+            (
+                await self.session.execute(
+                    select(HealthMetric)
+                    .where(HealthMetric.user_id == user_id, HealthMetric.date >= start)
+                    .order_by(HealthMetric.date.asc())
+                )
+            )
+            .scalars()
+            .all()
         )
-        metrics = list((await self.session.execute(query)).scalars().all())
         derived = list(
             (
                 await self.session.execute(
@@ -67,10 +77,16 @@ class RecoveryService:
                 )
             )
 
-        readiness = derived[-1].readiness_score if derived else None
+        readiness_row = next((item for item in reversed(derived) if item.readiness_score is not None), None)
+        readiness_missing_inputs: list[str] = []
+        if "HRV" not in latest_by_type:
+            readiness_missing_inputs.append("HRV")
+        if "Sleep" not in latest_by_type:
+            readiness_missing_inputs.append("Sono")
+
         recommendations: list[str] = []
         if "HRV" not in latest_by_type:
-            recommendations.append("Sem HRV recente. O widget segue funcional, mas a readiness fica parcial.")
+            recommendations.append("Sem HRV recente. O widget segue funcional, mas a readiness fica indisponivel.")
         if "Sleep" not in latest_by_type:
             recommendations.append("Sem dados de sono. Envie payloads do Auto Export para completar a leitura.")
         if not connection or not connection.last_synced_at:
@@ -88,36 +104,62 @@ class RecoveryService:
             metrics={
                 "readiness": RecoveryMetricWidgetRead(
                     label="Readiness",
-                    value=float(readiness) if readiness is not None else None,
+                    status="available" if readiness_row and not readiness_missing_inputs else "missing",
+                    value=float(readiness_row.readiness_score) if readiness_row and not readiness_missing_inputs else None,
                     unit="%",
-                    helper="Ultima derivada persistida." if readiness is not None else "Sem derivadas suficientes.",
+                    helper=(
+                        "Readiness calculada com HRV e sono recentes."
+                        if readiness_row and not readiness_missing_inputs
+                        else f"Readiness indisponivel: faltam {', '.join(readiness_missing_inputs)}."
+                    ),
+                    observed_at=readiness_row.date if readiness_row and not readiness_missing_inputs else None,
+                    source="DERIVED" if readiness_row and not readiness_missing_inputs else None,
+                    reason_unavailable=(
+                        None if readiness_row and not readiness_missing_inputs else "Dados insuficientes para calcular readiness."
+                    ),
+                    missing_inputs=readiness_missing_inputs,
                 ),
-                "hrv": RecoveryMetricWidgetRead(
-                    label="HRV",
-                    value=latest_by_type["HRV"].value if "HRV" in latest_by_type else None,
-                    unit=latest_by_type["HRV"].unit if "HRV" in latest_by_type else "ms",
-                    helper="Variabilidade cardiaca mais recente.",
+                "hrv": self._metric_widget(latest_by_type.get("HRV"), "HRV", "ms", "HRV indisponivel no momento."),
+                "restingHr": self._metric_widget(latest_by_type.get("RHR"), "RHR", "bpm", "RHR indisponivel no momento."),
+                "sleep": self._metric_widget(
+                    latest_by_type.get("Sleep"),
+                    "Sono",
+                    "h",
+                    "Sono indisponivel no momento.",
+                    transform=lambda value: round(value / 3600.0, 1),
                 ),
-                "restingHr": RecoveryMetricWidgetRead(
-                    label="RHR",
-                    value=latest_by_type["RHR"].value if "RHR" in latest_by_type else None,
-                    unit=latest_by_type["RHR"].unit if "RHR" in latest_by_type else "bpm",
-                    helper="Frequencia cardiaca de repouso.",
-                ),
-                "sleep": RecoveryMetricWidgetRead(
-                    label="Sono",
-                    value=round(latest_by_type["Sleep"].value / 3600.0, 1) if "Sleep" in latest_by_type else None,
-                    unit="h",
-                    helper="Horas de sono na ultima leitura.",
-                ),
-                "temperature": RecoveryMetricWidgetRead(
-                    label="Temperatura",
-                    value=latest_by_type["BodyTemp"].value if "BodyTemp" in latest_by_type else None,
-                    unit=latest_by_type["BodyTemp"].unit if "BodyTemp" in latest_by_type else "C",
-                    helper="Temperatura corporal mais recente.",
-                ),
+                "temperature": self._metric_widget(latest_by_type.get("BodyTemp"), "Temperatura", "C", "Temperatura indisponivel no momento."),
             },
             trend=trend,
             recommendations=recommendations,
             has_minimum_data=bool(metrics or derived),
+        )
+
+    def _metric_widget(
+        self,
+        metric: HealthMetric | None,
+        label: str,
+        fallback_unit: str,
+        missing_message: str,
+        transform=None,
+    ) -> RecoveryMetricWidgetRead:
+        if metric is None:
+            return RecoveryMetricWidgetRead(
+                label=label,
+                status="missing",
+                value=None,
+                unit=fallback_unit,
+                helper=missing_message,
+                reason_unavailable=missing_message,
+            )
+
+        value = transform(metric.value) if transform else metric.value
+        return RecoveryMetricWidgetRead(
+            label=label,
+            status="available",
+            value=value,
+            unit=fallback_unit if transform else (metric.unit if metric.unit else fallback_unit),
+            helper=f"{label} mais recente recebida pelo backend Python.",
+            observed_at=metric.date,
+            source=metric.source.value if hasattr(metric.source, "value") else str(metric.source),
         )

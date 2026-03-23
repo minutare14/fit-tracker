@@ -1,11 +1,21 @@
+from datetime import datetime
+from typing import Literal
+
+from pydantic import Field
+
 from app.schemas.common import APIModel
 
 
 class RecoveryMetricWidgetRead(APIModel):
     label: str
+    status: Literal["available", "partial", "missing"] = "missing"
     value: float | None = None
-    unit: str = ""
+    unit: str | None = None
     helper: str
+    observed_at: datetime | None = None
+    source: str | None = None
+    reason_unavailable: str | None = None
+    missing_inputs: list[str] = Field(default_factory=list)
 
 
 class RecoveryTrendPointRead(APIModel):

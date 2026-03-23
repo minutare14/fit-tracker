@@ -21,6 +21,7 @@ class BjjSessionBase(APIModel):
     srpe: int = Field(..., ge=1, le=10)
     rounds: int | None = None
     round_duration_minutes: int | None = None
+    round_rest_minutes: int | None = Field(default=None, ge=0)
     sparring_minutes: int | None = None
     drill_minutes: int | None = None
     technique_minutes: int | None = None
@@ -29,9 +30,10 @@ class BjjSessionBase(APIModel):
     successful_techniques: list[str] = Field(default_factory=list)
     suffered_techniques: list[str] = Field(default_factory=list)
     notes: str | None = None
-    fatigue_before: int | None = None
-    pain_level: int | None = None
-    session_score: int | None = None
+    fatigue_before: int | None = Field(default=None, ge=1, le=10)
+    pain_level: int | None = Field(default=None, ge=1, le=10)
+    injury_notes: str | None = None
+    session_score: int | None = Field(default=None, ge=1, le=10)
 
 
 class BjjSessionCreate(BjjSessionBase):
@@ -50,6 +52,7 @@ class BjjSessionUpdate(APIModel):
     srpe: int | None = Field(default=None, ge=1, le=10)
     rounds: int | None = None
     round_duration_minutes: int | None = None
+    round_rest_minutes: int | None = Field(default=None, ge=0)
     sparring_minutes: int | None = None
     drill_minutes: int | None = None
     technique_minutes: int | None = None
@@ -58,9 +61,10 @@ class BjjSessionUpdate(APIModel):
     successful_techniques: list[str] | None = None
     suffered_techniques: list[str] | None = None
     notes: str | None = None
-    fatigue_before: int | None = None
-    pain_level: int | None = None
-    session_score: int | None = None
+    fatigue_before: int | None = Field(default=None, ge=1, le=10)
+    pain_level: int | None = Field(default=None, ge=1, le=10)
+    injury_notes: str | None = None
+    session_score: int | None = Field(default=None, ge=1, le=10)
 
 
 class BjjSessionRead(BjjSessionBase):

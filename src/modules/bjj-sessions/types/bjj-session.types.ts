@@ -12,6 +12,7 @@ export interface CreateBjjSessionInput {
   srpe: number;
   rounds?: number | null;
   roundDurationMinutes?: number | null;
+  roundRestMinutes?: number | null;
   sparringMinutes?: number | null;
   drillMinutes?: number | null;
   techniqueMinutes?: number | null;
@@ -22,6 +23,7 @@ export interface CreateBjjSessionInput {
   notes?: string | null;
   fatigueBefore?: number | null;
   painLevel?: number | null;
+  injuryNotes?: string | null;
   sessionScore?: number | null;
 }
 

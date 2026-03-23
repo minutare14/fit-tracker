@@ -5,10 +5,30 @@ import { RefreshCw, Zap } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import PageHeader from "@/components/PageHeader";
 import { HevyWorkoutList } from "@/components/strength/HevyWorkoutList";
+import { requestJson } from "@/modules/core/api/http-client";
+import { SettingsIntegrationsOverview } from "@/modules/settings/integrations/types/integration.types";
+
+interface HevyWorkoutSummary {
+  startedAt: string;
+  volumeKg?: number;
+  prsCount?: number;
+  durationSeconds?: number;
+}
+
+interface SyncRoutineResult {
+  routine: string;
+  status: string;
+}
+
+interface HevySyncResult {
+  success?: boolean;
+  error?: string;
+  routines?: SyncRoutineResult[];
+}
 
 export default function StrengthPage() {
   const [programSyncing, setProgramSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<any>(null);
+  const [syncResult, setSyncResult] = useState<HevySyncResult | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [connected, setConnected] = useState(false);
   const [stats, setStats] = useState({
@@ -19,20 +39,17 @@ export default function StrengthPage() {
   });
 
   useEffect(() => {
-    fetchStats();
+    void fetchStats();
   }, []);
 
   const fetchStats = async () => {
     try {
-      const [configRes, workoutsRes] = await Promise.all([
-        fetch("/api/integrations/hevy/config?userId=default-user"),
-        fetch("/api/hevy/workouts?userId=default-user&limit=200"),
+      const [config, workouts] = await Promise.all([
+        requestJson<SettingsIntegrationsOverview>("/api/settings/integrations"),
+        requestJson<HevyWorkoutSummary[]>("/api/hevy/workouts?userId=default-user&limit=200"),
       ]);
 
-      const config = await configRes.json();
-      const workouts = await workoutsRes.json();
-
-      setConnected(config.status === "CONNECTED");
+      setConnected(Boolean(config.hevy.configured || config.hevy.hasValidApiKey));
 
       const now = new Date();
       const last7d = new Date(now);
@@ -42,18 +59,18 @@ export default function StrengthPage() {
       const currentYear = now.getFullYear();
 
       const weeklyVolume = workouts
-        .filter((workout: any) => new Date(workout.startedAt) >= last7d)
-        .reduce((acc: number, workout: any) => acc + (workout.volumeKg || 0), 0);
+        .filter((workout) => new Date(workout.startedAt) >= last7d)
+        .reduce((acc, workout) => acc + (workout.volumeKg || 0), 0);
 
       const prsThisMonth = workouts
-        .filter((workout: any) => {
+        .filter((workout) => {
           const startedAt = new Date(workout.startedAt);
           return startedAt.getMonth() === currentMonth && startedAt.getFullYear() === currentYear;
         })
-        .reduce((acc: number, workout: any) => acc + (workout.prsCount || 0), 0);
+        .reduce((acc, workout) => acc + (workout.prsCount || 0), 0);
 
       const avgDuration = workouts.length
-        ? Math.round(workouts.reduce((acc: number, workout: any) => acc + (workout.durationSeconds || 0), 0) / workouts.length / 60)
+        ? Math.round(workouts.reduce((acc, workout) => acc + (workout.durationSeconds || 0), 0) / workouts.length / 60)
         : 0;
 
       setStats({
@@ -70,10 +87,9 @@ export default function StrengthPage() {
   const handleManualSync = async () => {
     setSyncing(true);
     try {
-      await fetch("/api/integrations/hevy/sync", {
+      await requestJson("/api/settings/hevy/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "default-user", mode: "delta" })
+        body: JSON.stringify({ userId: "default-user", mode: "delta" }),
       });
       await fetchStats();
     } catch (error) {
@@ -87,15 +103,13 @@ export default function StrengthPage() {
     setProgramSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch("/api/integrations/hevy/sync-program", {
+      const data = await requestJson<HevySyncResult>("/api/settings/hevy/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "default-user" })
+        body: JSON.stringify({ userId: "default-user", mode: "full" }),
       });
-      const data = await res.json();
       setSyncResult(data);
-    } catch (error: any) {
-      setSyncResult({ error: error.message });
+    } catch (error) {
+      setSyncResult({ error: error instanceof Error ? error.message : "Falha na sincronizacao." });
     } finally {
       setProgramSyncing(false);
     }
@@ -153,9 +167,11 @@ export default function StrengthPage() {
               </div>
               {syncResult.success ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-slate-300">Programa <span className="font-bold text-white">BJJ Performance</span> sincronizado com sucesso.</p>
+                  <p className="text-xs text-slate-300">
+                    Programa <span className="font-bold text-white">BJJ Performance</span> sincronizado com sucesso.
+                  </p>
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    {syncResult.routines?.map((routine: any, index: number) => (
+                    {syncResult.routines?.map((routine, index) => (
                       <div key={index} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 p-2">
                         <span className="text-[10px] font-bold uppercase text-slate-400">{routine.routine}</span>
                         {routine.status === "SUCCESS" ? (
