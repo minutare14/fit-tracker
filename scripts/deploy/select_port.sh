@@ -29,7 +29,7 @@ collect_used_ports() {
 
 USED_PORTS=$(collect_used_ports)
 
-echo "Ports currently in use on host:"
+echo "Ports currently in use on host (local override):"
 echo "$USED_PORTS"
 
 if command -v docker >/dev/null 2>&1; then

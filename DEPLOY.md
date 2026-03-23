@@ -10,13 +10,22 @@ O deploy usa tres servicos:
 
 Nao ha rewrite interno do Next, nem rotas API concorrentes, nem Prisma no caminho oficial.
 
+## Dokploy
+
+No Dokploy, use o `docker-compose.yml` raiz sem override local. Ele nao publica `8000:8000` nem `3000:3000` no host, evitando conflito com outras apps no mesmo servidor.
+
+Configure os domains/ports no painel do Dokploy assim:
+
+- `app` na porta interna `3000`
+- `backend` na porta interna `8000` se voce quiser expor a API publicamente
+
+Para o frontend funcionar no browser, defina `NEXT_PUBLIC_API_BASE_URL` com a URL publica real do backend, por exemplo `https://api.seudominio.com`. O SSR continua usando `APP_API_BASE_URL_SERVER=http://backend:8000`.
+
 ## Variaveis
 
 Defina estas variaveis no ambiente de deploy:
 
-- `APP_HOST_PORT`: porta publica do frontend
 - `APP_INTERNAL_PORT`: porta interna do frontend, normalmente `3000`
-- `BACKEND_HOST_PORT`: porta publica da API Python
 - `NEXT_PUBLIC_API_BASE_URL`: URL publica da API, por exemplo `http://127.0.0.1:8000` em ambiente local ou a URL publica do backend em producao
 - `APP_API_BASE_URL_SERVER`: URL interna usada pelo SSR do Next, normalmente `http://backend:8000`
 - `POSTGRES_USER`

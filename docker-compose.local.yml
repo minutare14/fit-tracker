@@ -1,0 +1,8 @@
+services:
+  app:
+    ports:
+      - "${APP_HOST_PORT:-3020}:${APP_INTERNAL_PORT:-3000}"
+
+  backend:
+    ports:
+      - "${BACKEND_HOST_PORT:-8000}:8000"

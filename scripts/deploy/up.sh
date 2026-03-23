@@ -16,8 +16,18 @@ fi
 echo "Using deploy variables:"
 cat .deploy.env
 
-docker compose --env-file .env --env-file .deploy.env up -d --build
-docker compose --env-file .env --env-file .deploy.env ps
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.local.yml \
+  --env-file .env \
+  --env-file .deploy.env \
+  up -d --build
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.local.yml \
+  --env-file .env \
+  --env-file .deploy.env \
+  ps
 
 APP_HOST_PORT=$(grep '^APP_HOST_PORT=' .deploy.env | cut -d= -f2)
 BACKEND_HOST_PORT=$(grep '^BACKEND_HOST_PORT=' .deploy.env | cut -d= -f2)

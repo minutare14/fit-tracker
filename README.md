@@ -60,7 +60,9 @@ npm run dev
 
 ## Compose
 
-O compose raiz sobe apenas `app`, `backend` e `db`. O frontend publica a interface, o backend publica a API, e o Postgres fica na rede interna. O health principal da stack fica no backend em `/api/health`.
+O `docker-compose.yml` raiz sobe apenas `app`, `backend` e `db` na rede interna do projeto. Isso evita bind fixo de portas no host e funciona melhor em plataformas como Dokploy. O health principal da stack fica no backend em `/api/health`.
+
+Para desenvolvimento local com portas publicadas no host, use o override `docker-compose.local.yml` via scripts:
 
 ```bash
 ./scripts/deploy/select_port.sh
