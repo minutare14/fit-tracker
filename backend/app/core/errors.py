@@ -81,7 +81,12 @@ async def request_validation_exception_handler(request: Request, exc: RequestVal
     )
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled Server Error: %s", str(exc))
     return build_error_response(
         request,
         code="INTERNAL_SERVER_ERROR",

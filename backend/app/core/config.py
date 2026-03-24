@@ -67,9 +67,6 @@ class Settings(BaseSettings):
         if not normalized_value:
             return None
 
-        if normalized_value.startswith("prisma+postgres://"):
-            normalized_value = cls._extract_postgres_url_from_prisma(normalized_value)
-
         return cls._strip_unsupported_postgres_query_params(normalized_value)
 
     @model_validator(mode="after")
@@ -90,22 +87,6 @@ class Settings(BaseSettings):
             self.database_url_sync = self.database_url_sync.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
         return self
 
-    @staticmethod
-    def _extract_postgres_url_from_prisma(prisma_url: str) -> str:
-        parsed = urlparse(prisma_url.strip('"'))
-        api_key = parse_qs(parsed.query).get("api_key", [None])[0]
-        if not api_key:
-            raise ValueError("Invalid prisma+postgres URL: missing api_key")
-
-        payload = Settings._decode_prisma_api_key(api_key)
-        return payload.get("databaseUrl") or payload.get("shadowDatabaseUrl") or prisma_url
-
-    @staticmethod
-    def _decode_prisma_api_key(api_key: str) -> dict:
-        token_part = api_key.split(".")[1] if "." in api_key else api_key
-        padding = "=" * (-len(token_part) % 4)
-        decoded = base64.urlsafe_b64decode(f"{token_part}{padding}")
-        return json.loads(decoded.decode("utf-8"))
 
     @staticmethod
     def _strip_unsupported_postgres_query_params(database_url: str) -> str:
