@@ -7,6 +7,7 @@ from app.models.wellness import NutritionDaily
 from app.repositories.integration_repository import IntegrationRepository
 from app.schemas.nutrition import (
     NutritionAvailabilityRead,
+    NutritionHistoryRead,
     NutritionLogRead,
     NutritionOverviewRead,
     NutritionStatsRead,
@@ -20,6 +21,32 @@ class NutritionService:
         self.session = session
         self.integration_repository = IntegrationRepository(session)
         self.profile_service = ProfileService(session)
+
+    async def get_history(self, user_id: str, days: int = 30) -> NutritionHistoryRead:
+        user = await self.integration_repository.ensure_user(user_id)
+        profile = await self.profile_service.get_profile(user_id)
+
+        from datetime import datetime, timedelta, timezone
+        since = datetime.now(timezone.utc) - timedelta(days=days)
+
+        history_query = (
+            select(NutritionDaily)
+            .where(NutritionDaily.user_id == user_id, NutritionDaily.date >= since)
+            .order_by(NutritionDaily.date.desc())
+        )
+        entries = list((await self.session.execute(history_query)).scalars().all())
+
+        targets = NutritionTargetsRead(
+            calories=user.calories_target,
+            protein=user.protein_target,
+            carbs=user.carbs_target,
+            fat=user.fat_target,
+            hydration=profile.hydration_target_liters,
+            hydration_liters=profile.hydration_target_liters,
+        )
+        logs = [self._serialize_log(entry, targets) for entry in entries]
+
+        return NutritionHistoryRead(items=logs, total_days=len(entries))
 
     async def get_overview(self, user_id: str) -> NutritionOverviewRead:
         user = await self.integration_repository.ensure_user(user_id)

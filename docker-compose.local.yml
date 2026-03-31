@@ -2,7 +2,25 @@ services:
   app:
     ports:
       - "${APP_HOST_PORT:-3020}:${APP_INTERNAL_PORT:-3000}"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:${BACKEND_HOST_PORT:-8000}
+    networks:
+      - internal
 
   backend:
     ports:
       - "${BACKEND_HOST_PORT:-8000}:8000"
+    environment:
+      CORS_ORIGINS: http://127.0.0.1:${APP_HOST_PORT:-3020},http://localhost:${APP_HOST_PORT:-3020}
+    networks:
+      - internal
+
+  db:
+    ports:
+      - "${DB_HOST_PORT:-5432}:5432"
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge

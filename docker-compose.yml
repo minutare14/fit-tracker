@@ -4,12 +4,12 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:${BACKEND_HOST_PORT:-8000}}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
     restart: unless-stopped
     expose:
       - "${APP_INTERNAL_PORT:-3000}"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:${BACKEND_HOST_PORT:-8000}}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
       API_BASE_URL_SERVER: ${APP_API_BASE_URL_SERVER:-http://backend:8000}
       PORT: ${APP_INTERNAL_PORT:-3000}
       HOSTNAME: 0.0.0.0
@@ -17,11 +17,13 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -spider http://127.0.0.1:3000/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${APP_INTERNAL_PORT:-3000}/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
+    networks:
+      - internal
 
   backend:
     build:
@@ -33,12 +35,14 @@ services:
     environment:
       DATABASE_URL: ${BACKEND_DATABASE_URL:-postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-fittracker}@db:5432/${POSTGRES_DB:-fit_tracker}}
       API_V1_PREFIX: ${API_V1_PREFIX:-/api}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:${APP_HOST_PORT:-3020},http://localhost:${APP_HOST_PORT:-3020}}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
       HEVY_API_BASE_URL: ${HEVY_API_BASE_URL:-https://api.hevyapp.com/v1}
       HEVY_API_KEY: ${HEVY_API_KEY:-}
       HEVY_SYNC_PAGE_SIZE: ${HEVY_SYNC_PAGE_SIZE:-20}
       HEALTH_AUTO_EXPORT_SECRET: ${HEALTH_AUTO_EXPORT_SECRET:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-false}
+      SCHEDULER_TIMEZONE: ${SCHEDULER_TIMEZONE:-America/Bahia}
     depends_on:
       db:
         condition: service_healthy
@@ -46,12 +50,14 @@ services:
       test:
         [
           "CMD-SHELL",
-          "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/api/health\")'",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')\"",
         ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 40s
+    networks:
+      - internal
 
   db:
     image: postgres:16-alpine
@@ -68,6 +74,12 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    networks:
+      - internal
 
 volumes:
   postgres_data:
+
+networks:
+  internal:
+    driver: bridge

@@ -41,5 +41,12 @@ class UserProfile(StringIdMixin, TimestampMixin, Base):
     timezone: Mapped[str] = mapped_column(String(64), default="America/Bahia")
     unit_system: Mapped[str] = mapped_column(String(32), default="metric")
     hydration_target_liters: Mapped[float | None] = mapped_column(Float, nullable=True)
+    target_weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    weight_unit: Mapped[str] = mapped_column(String(16), default="kg")
+    calorie_target: Mapped[float | None] = mapped_column(Float, nullable=True)
+    protein_target_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+    carbs_target_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fat_target_g: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hydration_target_ml: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     user = relationship("User", back_populates="profile")

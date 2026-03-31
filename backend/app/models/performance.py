@@ -25,6 +25,7 @@ class BjjSessionTechnique(Base):
     session_id: Mapped[str] = mapped_column(ForeignKey("bjj_sessions.id", ondelete="CASCADE"), primary_key=True)
     technique_id: Mapped[str] = mapped_column(ForeignKey("bjj_techniques.id", ondelete="CASCADE"), primary_key=True)
     type: Mapped[str] = mapped_column(String(32), primary_key=True)  # trained, worked, suffered
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     session = relationship("BjjSession", back_populates="technique_links")
     technique = relationship("BjjTechnique", back_populates="session_links")
 
@@ -84,6 +85,11 @@ class DerivedMetric(StringIdMixin, TimestampMixin, Base):
     readiness_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     hydration_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    weight_delta_vs_previous: Mapped[float | None] = mapped_column(Float, nullable=True)
+    avg_weight_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    avg_calories_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    avg_protein_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    avg_sleep_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class ReadinessSnapshot(StringIdMixin, TimestampMixin, Base):
@@ -97,3 +103,4 @@ class ReadinessSnapshot(StringIdMixin, TimestampMixin, Base):
     resting_hr_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     sleep_hours: Mapped[float | None] = mapped_column(Float, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    body_temp: Mapped[float | None] = mapped_column(Float, nullable=True)

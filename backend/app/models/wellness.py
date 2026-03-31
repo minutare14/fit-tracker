@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, JSON, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -19,6 +19,7 @@ class HealthMetric(StringIdMixin, Base):
     unit: Mapped[str] = mapped_column(String(64))
     source: Mapped[IntegrationProvider] = mapped_column(Enum(IntegrationProvider))
     external_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    payload_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class NutritionDaily(StringIdMixin, TimestampMixin, Base):

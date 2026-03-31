@@ -15,6 +15,7 @@ from app.metrics.derivations.daily_metrics import (
 from app.models.daily_rollup import DailyRollup
 from app.models.performance import BjjSession, DerivedMetric, ReadinessSnapshot
 from app.models.wellness import HealthMetric
+from app.models.wellness import NutritionDaily
 from app.repositories.hevy_repository import HevyRepository
 from app.repositories.wellness_repository import WellnessRepository
 
@@ -56,6 +57,13 @@ class MetricsService:
         bjj_load = sum(session.session_load for session in bjj_sessions)
         recovery_score = calculate_recovery_score(hrv, sleep_seconds)
 
+        nutrition_query = select(NutritionDaily).where(
+            NutritionDaily.user_id == user_id,
+            NutritionDaily.date >= datetime.combine(normalized_day.date(), time.min, tzinfo=timezone.utc),
+            NutritionDaily.date < datetime.combine(normalized_day.date() + timedelta(days=1), time.min, tzinfo=timezone.utc),
+        )
+        nutrition = (await self.session.execute(nutrition_query)).scalar_one_or_none()
+
         daily_rollup = await self.wellness_repository.upsert_daily_rollup(
             user_id,
             normalized_day,
@@ -66,6 +74,14 @@ class MetricsService:
                 "sleep_hours": (sleep_seconds / 3600.0) if sleep_seconds else None,
                 "weight_kg": weight_kg,
                 "readiness_label": readiness_label(recovery_score),
+                "bjj_sessions_count": len(bjj_sessions),
+                "total_bjj_minutes": sum(s.duration_minutes for s in bjj_sessions),
+                "total_session_load": bjj_load,
+                "calories": nutrition.calories if nutrition else None,
+                "protein_g": nutrition.protein if nutrition else None,
+                "carbs_g": nutrition.carbs if nutrition else None,
+                "fat_g": nutrition.fat if nutrition else None,
+                "hydration_ml": (nutrition.water_liters * 1000) if nutrition and nutrition.water_liters else None,
             },
         )
 

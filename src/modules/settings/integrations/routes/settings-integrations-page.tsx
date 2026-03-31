@@ -217,11 +217,20 @@ export function SettingsIntegrationsPage() {
               >
                 <div className="space-y-3">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-slate-300">
+                    Status: <strong>{resource.data.healthAutoExport.status}</strong>
+                    <br />
                     URL do webhook:
                     <br />
                     <code className="break-all text-primary">{resource.data.healthAutoExport.webhookUrl}</code>
                     <br />
                     Segredo salvo: {resource.data.healthAutoExport.secretMask ?? "nenhum"}
+                    <br />
+                    Ultimo payload: {resource.data.healthAutoExport.lastPayloadAt ? new Date(resource.data.healthAutoExport.lastPayloadAt).toLocaleString("pt-BR") : "Nenhum"}
+                    {resource.data.healthAutoExport.lastError && (
+                      <div className="mt-2 border-t border-red-500/20 pt-2 text-red-500">
+                        Erro recente: {resource.data.healthAutoExport.lastError}
+                      </div>
+                    )}
                   </div>
                   <input className={inputClassName} value={healthHeaderName} onChange={(event) => setHealthHeaderName(event.target.value)} />
                   <input

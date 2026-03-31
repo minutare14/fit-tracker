@@ -46,6 +46,11 @@ class NutritionLogRead(APIModel):
     adherence: bool | None = None
 
 
+class NutritionHistoryRead(APIModel):
+    items: list[NutritionLogRead] = Field(default_factory=list)
+    total_days: int = 0
+
+
 class NutritionOverviewRead(APIModel):
     availability: NutritionAvailabilityRead
     recent_logs: list[NutritionLogRead] = Field(default_factory=list)

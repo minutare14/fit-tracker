@@ -39,6 +39,7 @@ class ProfileService:
         profile.sex = payload.sex
         profile.height_cm = payload.height_cm
         profile.current_weight_kg = payload.current_weight_kg
+        profile.target_weight_kg = payload.target_weight_kg
         profile.target_category = payload.target_category
         profile.belt_rank = payload.belt_rank
         profile.academy_team = payload.academy_team
@@ -46,7 +47,13 @@ class ProfileService:
         profile.injuries_restrictions = payload.injuries_restrictions
         profile.timezone = payload.timezone
         profile.unit_system = payload.unit_system
+        profile.weight_unit = payload.weight_unit
         profile.hydration_target_liters = payload.hydration_target_liters
+        profile.calorie_target = payload.calorie_target or payload.daily_calorie_target
+        profile.protein_target_g = payload.protein_target_g
+        profile.carbs_target_g = payload.carbs_target_g
+        profile.fat_target_g = payload.fat_target_g
+        profile.hydration_target_ml = payload.hydration_target_ml
 
         await self.session.flush()
         await self.session.commit()
@@ -67,6 +74,7 @@ class ProfileService:
             sex=profile.sex if profile and profile.sex else "",
             height_cm=profile.height_cm if profile else None,
             current_weight_kg=profile.current_weight_kg if profile and profile.current_weight_kg is not None else user.weight,
+            target_weight_kg=profile.target_weight_kg if profile else None,
             target_category=profile.target_category if profile and profile.target_category else "",
             belt_rank=profile.belt_rank if profile and profile.belt_rank else user.belt or "",
             academy_team=profile.academy_team if profile and profile.academy_team else "",
@@ -74,9 +82,12 @@ class ProfileService:
             injuries_restrictions=profile.injuries_restrictions if profile and profile.injuries_restrictions else "",
             timezone=profile.timezone if profile and profile.timezone else "America/Bahia",
             unit_system=profile.unit_system if profile and profile.unit_system else "metric",
+            weight_unit=profile.weight_unit if profile and profile.weight_unit else "kg",
             daily_calorie_target=user.calories_target,
-            protein_target_g=user.protein_target,
-            carbs_target_g=user.carbs_target,
-            fat_target_g=user.fat_target,
+            calorie_target=profile.calorie_target if profile else user.calories_target,
+            protein_target_g=profile.protein_target_g if profile else user.protein_target,
+            carbs_target_g=profile.carbs_target_g if profile else user.carbs_target,
+            fat_target_g=profile.fat_target_g if profile else user.fat_target,
             hydration_target_liters=profile.hydration_target_liters if profile else None,
+            hydration_target_ml=profile.hydration_target_ml if profile else None,
         )
